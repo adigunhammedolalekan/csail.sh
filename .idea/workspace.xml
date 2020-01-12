@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="d33e0391-4457-4e31-88c7-44ad1bcaa58c" name="Default Changelist" comment="" />
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Go File" />
+      </list>
+    </option>
+  </component>
+  <component name="GOROOT" path="/usr/local/go" />
+  <component name="ProjectId" id="1W4Xu155jYSUJam3oxhIo9F3m2p" />
+  <component name="PropertiesComponent">
+    <property name="DefaultGoTemplateProperty" value="Go File" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="go.import.settings.migrated" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/pkg/services" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/pkg/services" />
+    </key>
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="RunManager" selected="Go Test.TestApiHandler_CreateAppHandlerAuthError in github.com/saas/hostgolang/pkg/http">
+    <configuration name="TestApiHandler_AuthenticateAccountHandler in github.com/saas/hostgolang/pkg/http" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="hostgolang" />
+      <working_directory value="$PROJECT_DIR$/pkg/http" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="github.com/saas/hostgolang/pkg/http" />
+      <directory value="$PROJECT_DIR$/" />
+      <filePath value="$PROJECT_DIR$/" />
+      <pattern value="^TestApiHandler_AuthenticateAccountHandler$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestApiHandler_AuthenticateAccountHandler2BadInput in github.com/saas/hostgolang/pkg/http" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="hostgolang" />
+      <working_directory value="$PROJECT_DIR$/pkg/http" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="github.com/saas/hostgolang/pkg/http" />
+      <directory value="$PROJECT_DIR$/" />
+      <filePath value="$PROJECT_DIR$/" />
+      <pattern value="^TestApiHandler_AuthenticateAccountHandler2BadInput$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestApiHandler_CreateAppHandler in github.com/saas/hostgolang/pkg/http" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="hostgolang" />
+      <working_directory value="$PROJECT_DIR$/pkg/http" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="github.com/saas/hostgolang/pkg/http" />
+      <directory value="$PROJECT_DIR$/" />
+      <filePath value="$PROJECT_DIR$/" />
+      <pattern value="^TestApiHandler_CreateAppHandler$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestApiHandler_CreateAppHandlerAuthError in github.com/saas/hostgolang/pkg/http" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="hostgolang" />
+      <working_directory value="$PROJECT_DIR$/pkg/http" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="github.com/saas/hostgolang/pkg/http" />
+      <directory value="$PROJECT_DIR$/" />
+      <filePath value="$PROJECT_DIR$/" />
+      <pattern value="^TestApiHandler_CreateAppHandlerAuthError$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestCreateAccountHandlerBadInput in github.com/saas/hostgolang/pkg/http" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="hostgolang" />
+      <working_directory value="$PROJECT_DIR$/pkg/http" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="github.com/saas/hostgolang/pkg/http" />
+      <directory value="$PROJECT_DIR$/" />
+      <filePath value="$PROJECT_DIR$/" />
+      <pattern value="^TestCreateAccountHandlerBadInput$" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Go Test.TestApiHandler_CreateAppHandlerAuthError in github.com/saas/hostgolang/pkg/http" />
+        <item itemvalue="Go Test.TestApiHandler_CreateAppHandler in github.com/saas/hostgolang/pkg/http" />
+        <item itemvalue="Go Test.TestApiHandler_AuthenticateAccountHandler2BadInput in github.com/saas/hostgolang/pkg/http" />
+        <item itemvalue="Go Test.TestApiHandler_AuthenticateAccountHandler in github.com/saas/hostgolang/pkg/http" />
+        <item itemvalue="Go Test.TestCreateAccountHandlerBadInput in github.com/saas/hostgolang/pkg/http" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+</project>

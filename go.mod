@@ -1,0 +1,44 @@
+module github.com/saas/hostgolang
+
+go 1.13
+
+require (
+	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
+	github.com/Microsoft/hcsshim v0.8.7 // indirect
+	github.com/containerd/continuity v0.0.0-20191214063359-1097c8bae83b // indirect
+	github.com/docker/distribution v2.7.1+incompatible // indirect
+	github.com/docker/docker v1.13.1
+	github.com/docker/go-connections v0.4.0 // indirect
+	github.com/fatih/color v1.9.0 // indirect
+	github.com/gin-gonic/gin v1.5.0
+	github.com/go-redis/redis v6.15.6+incompatible
+	github.com/golang/mock v1.2.0
+	github.com/google/uuid v1.1.1
+	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
+	github.com/gorilla/mux v1.7.3 // indirect
+	github.com/jinzhu/gorm v1.9.12
+	github.com/joho/godotenv v1.3.0
+	github.com/manifoldco/promptui v0.6.0 // indirect
+	github.com/morikuni/aec v1.0.0 // indirect
+	github.com/opencontainers/image-spec v1.0.1 // indirect
+	github.com/opencontainers/runc v0.1.1 // indirect
+	github.com/pelletier/go-toml v1.6.0 // indirect
+	github.com/spf13/cast v1.3.1 // indirect
+	github.com/spf13/cobra v0.0.5 // indirect
+	github.com/spf13/jwalterweatherman v1.1.0 // indirect
+	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/spf13/viper v1.6.1 // indirect
+	golang.org/x/crypto v0.0.0-20191205180655-e7c4368fe9dd
+	golang.org/x/oauth2 v0.0.0-20191202225959-858c2ad4c8b6 // indirect
+	golang.org/x/sync v0.0.0-20190423024810-112230192c58 // indirect
+	golang.org/x/sys v0.0.0-20200107162124-548cf772de50 // indirect
+	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
+	gopkg.in/ini.v1 v1.51.1 // indirect
+	gopkg.in/yaml.v2 v2.2.7 // indirect
+	k8s.io/api v0.0.0-20190918155943-95b840bb6a1f
+	k8s.io/apimachinery v0.0.0-20190913080033-27d36303b655
+	k8s.io/client-go v0.0.0-20190918160344-1fbdaa4c8d90
+	k8s.io/utils v0.0.0-20191218082557-f07c713de883 // indirect
+)
+
+replace github.com/docker/docker => github.com/docker/engine v1.4.2-0.20190717161051-705d9623b7c1

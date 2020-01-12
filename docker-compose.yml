@@ -1,0 +1,21 @@
+version: "3"
+services:
+  database:
+    image: postgres:latest
+    container_name: hostgo-database
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: manman
+      POSTGRES_DB: hostgolang
+      PGDATA: /var/lib/postgresql/hostgolang/data/db
+    volumes:
+      - /Users/adigun/mnt/hostgolang/data:/var/lib/postgresql/data
+    ports:
+      - "59010:5432"
+  redis:
+    image: redis:latest
+    ports:
+      - 59011:6379
+    volumes:
+      - /Users/adigun/mnt/hostgolang/redis/data:/data
