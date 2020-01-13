@@ -63,6 +63,10 @@ func (d *defaultK8sService) DeployService(tag, name string, envs map[string]stri
 	if !isLocal {
 		serviceType = v1.ServiceTypeLoadBalancer
 	}
+	if err := d.createRegistrySecret(); err != nil {
+		log.Println(err)
+		return nil, err
+	}
 	svc, err := d.createService(name, serviceType)
 	if err != nil {
 		return nil, err
@@ -232,6 +236,7 @@ func (d *defaultK8sService) createRegistrySecret() error {
 	if _, err := c.Create(secret); err != nil {
 		return err
 	}
+	log.Println("secret created")
 	return nil
 }
 

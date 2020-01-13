@@ -19,3 +19,18 @@ services:
       - 59011:6379
     volumes:
       - /Users/adigun/mnt/hostgolang/redis/data:/data
+
+  docker-registry:
+    restart: always
+    image: registry:2
+    ports:
+      - 5001:5000
+    environment:
+      REGISTRY_AUTH: htpasswd
+      REGISTRY_AUTH_HTPASSWD_REALM: Registry
+      REGISTRY_AUTH_HTPASSWD_PATH: /mnt/registry/auth/registry.password
+      REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: /mnt/registry/data
+    volumes:
+      - /Users/adigun/mnt/storm/registry/data:/mnt/registry/data
+      - /Users/adigun/mnt/storm/registry/auth/registry.password:/mnt/registry/auth/registry.password
+      - /Users/adigun/mnt/storm/build:/mnt/build

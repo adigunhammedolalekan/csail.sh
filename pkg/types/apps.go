@@ -24,6 +24,19 @@ type Environment struct {
 	EnvValue string `json:"env_value"`
 }
 
+type Release struct {
+	gorm.Model
+	AppId uint `json:"app_id"`
+	LastCheckSum string `json:"last_check_sum"`
+}
+
+func NewRelease(appId uint, checkSum string) *Release {
+	return &Release{
+		AppId:        appId,
+		LastCheckSum: checkSum,
+	}
+}
+
 func NewEnvVariable(appId uint, k, v string) *Environment {
 	return &Environment{
 		AppId:    appId,

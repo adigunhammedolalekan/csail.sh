@@ -50,7 +50,7 @@ func (d *defaultDockerService) BuildImage(ctx context.Context, buildDir, name st
 	}
 	tag := d.md5()[:6]
 	pushUrl := fmt.Sprintf("%s/%s:%s", d.cfg.Registry.Url, strings.ToLower(name), tag)
-	_, err = d.client.ImageBuild(ctx, buildCtx, types.ImageBuildOptions{
+	rr, err := d.client.ImageBuild(ctx, buildCtx, types.ImageBuildOptions{
 		NoCache:    false,
 		Remove:     false,
 		Dockerfile: "Dockerfile",
@@ -59,14 +59,18 @@ func (d *defaultDockerService) BuildImage(ctx context.Context, buildDir, name st
 	if err != nil {
 		return "", err
 	}
+	rsp, _ := ioutil.ReadAll(rr.Body)
+	fmt.Println(rr.OSType, string(rsp))
 	return pushUrl, nil
 }
 
 func (d *defaultDockerService) PushImage(ctx context.Context, tag string) error {
-	_, err := d.client.ImagePush(ctx, tag, types.ImagePushOptions{RegistryAuth: d.registryAuthAsBase64()})
+	r, err := d.client.ImagePush(ctx, tag, types.ImagePushOptions{RegistryAuth: d.registryAuthAsBase64()})
 	if err != nil {
 		return err
 	}
+	rsp, _ := ioutil.ReadAll(r)
+	log.Println(string(rsp))
 	return nil
 }
 

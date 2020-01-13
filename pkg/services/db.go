@@ -19,5 +19,5 @@ func CreateDatabaseConnection(connectUri string) (*gorm.DB, error) {
 }
 
 func migrate(db *gorm.DB) {
-	db.Debug().AutoMigrate(&types.Account{}, &types.App{}, &types.Environment{})
+	db.Debug().AutoMigrate(&types.Account{}, &types.App{}, &types.Environment{}, &types.Release{})
 }
