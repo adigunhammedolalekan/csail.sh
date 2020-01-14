@@ -65,4 +65,3 @@ func VerifyHashPassword(hashed, password string) bool {
 	}
 	return true
 }
-

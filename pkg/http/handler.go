@@ -6,13 +6,13 @@ import (
 )
 
 type SuccessResponse struct {
-	Error bool `json:"error"`
-	Message string `json:"message"`
-	Data interface{} `json:"data"`
+	Error   bool        `json:"error"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
 }
 
 type ErrorResponse struct {
-	Error bool `json:"error"`
+	Error   bool   `json:"error"`
 	Message string `json:"message"`
 }
 
@@ -27,4 +27,3 @@ func ForbiddenRequestResponse(ctx *gin.Context, message string) {
 func InternalServerErrorResponse(ctx *gin.Context, message string) {
 	ctx.JSON(http.StatusInternalServerError, &ErrorResponse{Error: true, Message: message})
 }
-

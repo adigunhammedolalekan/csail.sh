@@ -7,27 +7,46 @@ import (
 
 type App struct {
 	gorm.Model
-	AccountId uint `json:"account_id"`
-	AppName string `json:"app_name"`
-	AccessUrl string `json:"access_url"`
+	AccountId           uint   `json:"account_id"`
+	AppName             string `json:"app_name"`
+	AccessUrl           string `json:"access_url"`
 	RegistryDownloadUrl string `json:"registry_download_url"`
-	LocalAccessUrl string `json:"local_access_url"`
+	LocalAccessUrl      string `json:"local_access_url"`
 
 	Environments []Environment `json:"environments"`
-	Account *Account `json:"account" gorm:"-" sql:"-"`
+	Account      *Account      `json:"account" gorm:"-" sql:"-"`
 }
 
 type Environment struct {
 	gorm.Model
-	AppId uint `json:"app_id"`
-	EnvKey string `json:"env_key"`
+	AppId    uint   `json:"app_id"`
+	EnvKey   string `json:"env_key"`
 	EnvValue string `json:"env_value"`
 }
 
 type Release struct {
 	gorm.Model
-	AppId uint `json:"app_id"`
+	AppId        uint   `json:"app_id"`
 	LastCheckSum string `json:"last_check_sum"`
+}
+
+type Instance struct {
+	Id string `json:"id"`
+	Status string `json:"status"`
+	Name string `json:"name"`
+	Started string `json:"started"`
+}
+
+type DeploymentSettings struct {
+	gorm.Model
+	AppId uint `json:"app_id"`
+	Replicas uint `json:"replicas"`
+	CPUs uint `json:"cpus"`
+	Memory uint `json:"memory"`
+}
+
+func NewDeploymentSettings(appId, replicas uint) *DeploymentSettings {
+	return &DeploymentSettings{AppId: appId, Replicas: replicas}
 }
 
 func NewRelease(appId uint, checkSum string) *Release {

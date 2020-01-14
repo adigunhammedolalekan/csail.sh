@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/saas/hostgolang/pkg/types"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/client-go/util/retry"
 
 	"github.com/saas/hostgolang/pkg/config"
@@ -27,9 +28,11 @@ const registrySecretName = "storm-secret"
 
 //go:generate mockgen -destination=mocks/k8s_service_mock.go -package=mocks github.com/saas/hostgolang/pkg/services K8sService
 type K8sService interface {
-	DeployService(tag, name string, envs map[string]string, isLocal bool) (*types.DeploymentResult, error)
+	DeployService(opt *types.CreateDeploymentOpts) (*types.DeploymentResult, error)
 	GetLogs(appName string) (string, error)
 	UpdateEnvs(appName string, envs []types.Environment) error
+	ScaleApp(appName string, replicas int) error
+	ListRunningPods(appName string) ([]types.Instance, error)
 }
 
 type defaultK8sService struct {
@@ -58,15 +61,15 @@ func (d *defaultK8sService) createNameSpace() error {
 	return nil
 }
 
-func (d *defaultK8sService) DeployService(tag, name string, envs map[string]string, isLocal bool) (*types.DeploymentResult, error) {
+func (d *defaultK8sService) DeployService(opt *types.CreateDeploymentOpts) (*types.DeploymentResult, error) {
 	var serviceType = v1.ServiceTypeNodePort
-	if !isLocal {
+	if !opt.IsLocal {
 		serviceType = v1.ServiceTypeLoadBalancer
 	}
 	if err := d.createRegistrySecret(); err != nil {
-		log.Println(err)
 		return nil, err
 	}
+	name := opt.Name
 	svc, err := d.createService(name, serviceType)
 	if err != nil {
 		return nil, err
@@ -78,17 +81,17 @@ func (d *defaultK8sService) DeployService(tag, name string, envs map[string]stri
 			return nil, err
 		}
 	}
-	if err := d.createDeployment(tag, name, envs, svc.Labels, ports); err != nil {
+	if err := d.createDeployment(opt.Tag, name, opt.Envs, svc.Labels, ports, opt.Replicas, opt.Memory, opt.Cpu); err != nil {
 		return nil, err
 	}
 
 	addr := ""
 	for _, p := range ports {
-		if isLocal {
+		if opt.IsLocal {
 			if nodePort := p.NodePort; nodePort != 0 {
 				addr = fmt.Sprintf("http://localhost:%d", nodePort)
 			}
-		}else {
+		} else {
 			if lbIp := svc.Spec.LoadBalancerIP; lbIp == "" {
 				externalIps := svc.Spec.ExternalIPs
 				for _, ip := range externalIps {
@@ -105,22 +108,71 @@ func (d *defaultK8sService) DeployService(tag, name string, envs map[string]stri
 }
 
 func (d *defaultK8sService) UpdateEnvs(appName string, envs []types.Environment) error {
+	if envs == nil {
+		envs = make([]types.Environment, 0)
+	}
 	c := d.client.AppsV1().Deployments(stormNs)
 	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		deployment, err := c.Get(appName, metav1.GetOptions{})
 		if err != nil {
 			return errors.New("deployment not found")
 		}
-		for _, value := range envs {
-			deployment.Spec.Template.Spec.Containers[0].Env = append(deployment.Spec.Template.Spec.Containers[0].Env, v1.EnvVar{
-				Name: value.EnvKey, Value: value.EnvValue,
-			})
+		portValue := ""
+		podEnvs := deployment.Spec.Template.Spec.Containers[0].Env
+		for _, pe := range podEnvs {
+			if strings.ToLower(pe.Name) == "port" {
+				portValue = pe.Value
+				break
+			}
 		}
+		envs = append(envs, types.Environment{EnvKey: "PORT", EnvValue: portValue})
+		newEnvs := make([]v1.EnvVar, 0)
+		for _, newEnv := range envs {
+			newEnvs = append(newEnvs, v1.EnvVar{Name: newEnv.EnvKey, Value: newEnv.EnvValue})
+		}
+		deployment.Spec.Template.Spec.Containers[0].Env = newEnvs
 		if _, err := c.Update(deployment); err != nil {
 			return err
 		}
 		return nil
 	})
+}
+
+func (d *defaultK8sService) ScaleApp(appName string, replicas int) error {
+	c := d.client.AppsV1().Deployments(stormNs)
+	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		deployment, err := c.Get(appName, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		deployment.Spec.Replicas = Int32(int32(replicas))
+		if _, err := c.Update(deployment); err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
+func (d *defaultK8sService) ListRunningPods(appName string) ([]types.Instance, error) {
+	pods, err := d.getPodsBySelector(fmt.Sprintf("web=%s-service", strings.ToLower(appName)))
+	if err != nil {
+		return nil, err
+	}
+	data := make([]types.Instance, 0)
+	for _, p := range pods {
+		started := ""
+		if p.Status.StartTime != nil {
+			started = p.Status.StartTime.String()
+		}
+		in := types.Instance{
+			Id:      string(p.UID),
+			Status:  string(p.Status.Phase),
+			Name:    p.Name,
+			Started: started,
+		}
+		data = append(data, in)
+	}
+	return data, nil
 }
 
 func (d *defaultK8sService) createNodePortService(name string) (*v1.Service, error) {
@@ -162,7 +214,16 @@ func (d *defaultK8sService) createService(serviceName string, serviceType v1.Ser
 	return client.Services(stormNs).Create(svc)
 }
 
-func (d *defaultK8sService) createDeployment(tag, name string, envs, labels map[string]string, ports []v1.ServicePort) error {
+func (d *defaultK8sService) createDeployment(tag, name string, envs, labels map[string]string, ports []v1.ServicePort, replicas int32, mem, vCpu float64) error {
+	cpu, err := resource.ParseQuantity(fmt.Sprintf("%fm", vCpu * 1000))
+	if err != nil {
+		return err
+	}
+	memory, err := resource.ParseQuantity(fmt.Sprintf("%fMi", mem * 1000))
+	if err != nil {
+		return err
+	}
+	log.Println(cpu.String(), memory.String())
 	deployment := &appsV1.Deployment{}
 	deployment.Name = name
 	deployment.Labels = labels
@@ -192,6 +253,16 @@ func (d *defaultK8sService) createDeployment(tag, name string, envs, labels map[
 		Protocol:      "TCP",
 	}}
 	container.ImagePullPolicy = v1.PullAlways
+	container.Resources = v1.ResourceRequirements{
+		Limits:   v1.ResourceList{
+			v1.ResourceCPU: cpu,
+			v1.ResourceMemory: memory,
+		},
+		Requests: v1.ResourceList{
+			v1.ResourceCPU: memory,
+			v1.ResourceMemory: cpu,
+		},
+	}
 	podTemplate := v1.PodTemplateSpec{}
 	podTemplate.Labels = labels
 	podTemplate.Name = name
@@ -202,7 +273,7 @@ func (d *defaultK8sService) createDeployment(tag, name string, envs, labels map[
 		ImagePullSecrets: []v1.LocalObjectReference{{Name: registrySecretName}},
 	}
 	deployment.Spec = appsV1.DeploymentSpec{
-		Replicas: Int32(1),
+		Replicas: Int32(replicas),
 		Selector: &metav1.LabelSelector{MatchLabels: labels},
 		Template: podTemplate,
 	}
@@ -301,11 +372,12 @@ func (d *defaultK8sService) dockerConfigJson() ([]byte, error) {
 func findAvailablePort() int {
 	port := rand.Intn(59999)
 	addr := fmt.Sprintf("localhost:%d", port)
-	conn, err := net.DialTimeout("tcp", addr, 5 * time.Second)
+	conn, err := net.DialTimeout("tcp", addr, 5*time.Second)
 	if err != nil {
 		return port
 	}
-	if err := conn.Close(); err != nil { /*no-op*/ }
+	if err := conn.Close(); err != nil { /*no-op*/
+	}
 	return findAvailablePort()
 }
 

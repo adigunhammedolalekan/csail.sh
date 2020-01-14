@@ -5,6 +5,7 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/saas/hostgolang/pkg/types"
 )
+
 //go:generate mockgen -destination=mocks/session_store.go -package=mocks github.com/saas/hostgolang/pkg/session Store
 type Store interface {
 	Put(token string, account *types.Account) error
@@ -36,5 +37,5 @@ func (r *redisSessionStore) Get(token string) (*types.Account, error) {
 }
 
 func NewRedisSessionStore(client *redis.Client) Store {
-	return &redisSessionStore{client:client}
+	return &redisSessionStore{client: client}
 }

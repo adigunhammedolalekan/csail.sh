@@ -10,7 +10,7 @@ type Account struct {
 	GithubId       string `json:"github_id"`
 	CompanyName    string `json:"company_name"`
 	CompanyWebsite string `json:"company_website"`
-	AccountToken string `json:"account_token"`
+	AccountToken   string `json:"account_token"`
 }
 
 func NewAccount(opt *NewAccountOpts, token string) *Account {
@@ -20,6 +20,6 @@ func NewAccount(opt *NewAccountOpts, token string) *Account {
 		Password:       opt.Password,
 		CompanyName:    opt.CompanyName,
 		CompanyWebsite: opt.CompanyWebsite,
-		AccountToken: token,
+		AccountToken:   token,
 	}
 }

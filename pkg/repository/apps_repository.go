@@ -21,12 +21,15 @@ type AppsRepository interface {
 	GetAccountApps(accountId uint) ([]types.App, error)
 	UpdateEnvironmentVars(appName string, vars map[string]string) error
 	GetEnvironmentVars(appName string) ([]types.Environment, error)
+	DeleteEnvironmentVars(appName string, keys []string) error
+	ScaleApp(appName string, replicas int) error
+	ListRunningInstances(appName string) ([]types.Instance, error)
 }
 
 type appsRepository struct {
-	db *gorm.DB
+	db      *gorm.DB
 	nameGen namegenerator.Generator
-	ks8 services.K8sService
+	ks8     services.K8sService
 }
 
 func (a *appsRepository) GetAccountApps(accountId uint) ([]types.App, error) {
@@ -72,7 +75,6 @@ func (a *appsRepository) UpdateEnvironmentVars(name string, envs map[string]stri
 		return ErrAppNotFound
 	}
 	appId := app.ID
-	m := make([]types.Environment, 0)
 	for k, v := range envs {
 		if ev, err := a.GetEnvironment(k, appId); err == nil && len(ev.EnvValue) > 0 {
 			err = a.DeleteEnvironmentVar(k, appId)
@@ -81,12 +83,15 @@ func (a *appsRepository) UpdateEnvironmentVars(name string, envs map[string]stri
 		if err := a.db.Create(e).Error; err != nil {
 			return ErrAppUpdateFailed
 		}
-		m = append(m, *e)
+	}
+	m, err := a.GetEnvironmentVars(app.AppName)
+	if err != nil {
+		return err
 	}
 	return a.ks8.UpdateEnvs(app.AppName, m)
 }
 
-func (a *appsRepository) GetEnvironmentVars(name string)([]types.Environment, error) {
+func (a *appsRepository) GetEnvironmentVars(name string) ([]types.Environment, error) {
 	app, err := a.GetApp(name)
 	if err != nil {
 		return nil, ErrAppNotFound
@@ -112,6 +117,40 @@ func (a *appsRepository) GetEnvironment(name string, appId uint) (*types.Environ
 	return env, nil
 }
 
+func (a *appsRepository) DeleteEnvironmentVars(appName string, keys []string) error {
+	app, err := a.GetApp(appName)
+	if err != nil {
+		return ErrAppNotFound
+	}
+	for _, key := range keys {
+		if err := a.DeleteEnvironmentVar(key, app.ID); err != nil {
+			return ErrAppUpdateFailed
+		}
+	}
+	newEnvs, err := a.GetEnvironmentVars(appName)
+	if err != nil {
+		return err
+	}
+	return a.ks8.UpdateEnvs(appName, newEnvs)
+}
+
+func (a *appsRepository) ScaleApp(appName string, replicas int) error {
+	app, err := a.GetApp(appName)
+	if err != nil {
+		return ErrAppNotFound
+	}
+	err = a.db.Table("deployment_settings").Where("app_id = ?", app.ID).
+		UpdateColumn("replicas", replicas).Error
+	if err != nil {
+		return ErrAppUpdateFailed
+	}
+	return a.ks8.ScaleApp(appName, replicas)
+}
+
+func (a *appsRepository) ListRunningInstances(appName string) ([]types.Instance, error) {
+	return a.ks8.ListRunningPods(appName)
+}
+
 func NewAppsRepository(db *gorm.DB, nameGenerator namegenerator.Generator, k8s services.K8sService) AppsRepository {
-	return &appsRepository{db:db, nameGen: nameGenerator, ks8: k8s}
+	return &appsRepository{db: db, nameGen: nameGenerator, ks8: k8s}
 }

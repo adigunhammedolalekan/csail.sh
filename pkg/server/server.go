@@ -20,7 +20,7 @@ import (
 )
 
 type Server struct {
-	addr string
+	addr   string
 	router *gin.Engine
 }
 
@@ -33,17 +33,17 @@ func NewServer(addr string) (*Server, error) {
 		return nil, err
 	}
 	redisClient := redis.NewClient(&redis.Options{
-		Addr:               os.Getenv("REDIS_HOST"),
-		Password:           "",
-		DB:                 0,
+		Addr:     os.Getenv("REDIS_HOST"),
+		Password: "",
+		DB:       0,
 	})
 	if err := redisClient.Ping().Err(); err != nil {
 		return nil, err
 	}
 	cfg := &config.Config{
 		ProxyServerAddress: "http://localhost:9093",
-		Registry:           config.RegistryConfig{
-			Url: "localhost:5001",
+		Registry: config.RegistryConfig{
+			Url:      "localhost:5001",
 			Username: "lekan",
 			Password: "manman",
 		},
@@ -63,7 +63,7 @@ func NewServer(addr string) (*Server, error) {
 	sessionStore := session.NewRedisSessionStore(redisClient)
 	accountRepo := repository.NewAccountRepository(db, sessionStore)
 	appRepo := repository.NewAppsRepository(db, namegenerator.NewNameGenerator(time.Now().UnixNano()), k8sService)
-	deploymentRepo := repository.NewDeploymentRepository(db, dockerService, k8sService, proxyClient)
+	deploymentRepo := repository.NewDeploymentRepository(db, dockerService, k8sService, proxyClient, appRepo)
 
 	apiHandler := http.NewApiHandler(appRepo, accountRepo, sessionStore)
 	deploymentHandler := http.NewDeploymentHandler(deploymentRepo, appRepo, sessionStore)
@@ -77,6 +77,9 @@ func NewServer(addr string) (*Server, error) {
 	apiRouter.GET("/apps/configs/:appName", deploymentHandler.GetEnvironmentVars)
 	apiRouter.GET("/apps/logs/:appName", deploymentHandler.GetApplicationLogsHandler)
 	apiRouter.POST("/apps/configs/:appName", deploymentHandler.UpdateEnvironmentVars)
+	apiRouter.DELETE("/apps/configs/unset/:appName", deploymentHandler.DeleteEnvironmentVars)
+	apiRouter.GET("/apps/scale/:appName", deploymentHandler.ScaleAppHandler)
+	apiRouter.GET("/apps/ps/:appName", deploymentHandler.ListRunningInstances)
 
 	return &Server{
 		addr:   addr,

@@ -14,8 +14,9 @@ import (
 	"net/http/httptest"
 	"testing"
 )
+
 var mockAccount = &types.Account{
-	Model:          gorm.Model{
+	Model: gorm.Model{
 		ID: 1,
 	},
 	Name:           "test",
@@ -27,7 +28,7 @@ var mockAccount = &types.Account{
 	AccountToken:   "token",
 }
 var mockApp = &types.App{
-	Model:     gorm.Model{
+	Model: gorm.Model{
 		ID: 1,
 	},
 	AccountId: 1,
@@ -106,7 +107,7 @@ func TestApiHandler_AuthenticateAccountHandler(t *testing.T) {
 
 	handler.AuthenticateAccountHandler(ctx)
 
-	if want, got := http.StatusOK, w.Code; got !=  want {
+	if want, got := http.StatusOK, w.Code; got != want {
 		t.Fatalf("expected httpCode %d; got %d instead", want, got)
 	}
 }
@@ -119,7 +120,7 @@ func TestApiHandler_AuthenticateAccountHandler2BadInput(t *testing.T) {
 
 	handler.AuthenticateAccountHandler(ctx)
 
-	if want, got := http.StatusBadRequest, w.Code; got !=  want {
+	if want, got := http.StatusBadRequest, w.Code; got != want {
 		t.Fatalf("expected httpCode %d; got %d instead", want, got)
 	}
 }
@@ -143,7 +144,7 @@ func TestApiHandler_CreateAppHandler(t *testing.T) {
 	ctx.Request = req
 
 	handler.CreateAppHandler(ctx)
-	if want, got := http.StatusOK, w.Code; got !=  want {
+	if want, got := http.StatusOK, w.Code; got != want {
 		t.Fatalf("expected httpCode %d; got %d instead", want, got)
 	}
 }
@@ -166,7 +167,7 @@ func TestApiHandler_CreateAppHandlerAuthError(t *testing.T) {
 	ctx.Request = req
 
 	handler.CreateAppHandler(ctx)
-	if want, got := http.StatusForbidden, w.Code; got !=  want {
+	if want, got := http.StatusForbidden, w.Code; got != want {
 		t.Fatalf("expected httpCode %d; got %d instead", want, got)
 	}
 }

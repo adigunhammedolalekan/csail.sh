@@ -12,16 +12,16 @@ import (
 const tokenHeaderName = "X-Auth-Token"
 
 type ApiHandler struct {
-	appRepo repository.AppsRepository
+	appRepo     repository.AppsRepository
 	accountRepo repository.AccountRepository
-	store session.Store
+	store       session.Store
 }
 
 func NewApiHandler(app repository.AppsRepository, account repository.AccountRepository, store session.Store) *ApiHandler {
-	return &ApiHandler {
+	return &ApiHandler{
 		appRepo:     app,
 		accountRepo: account,
-		store: store,
+		store:       store,
 	}
 }
 

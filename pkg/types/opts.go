@@ -9,10 +9,19 @@ type NewAccountOpts struct {
 }
 
 type AuthenticateAccountOpts struct {
-	Email string `json:"email"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
 type DeploymentResult struct {
 	Address string `json:"address"`
+}
+
+type CreateDeploymentOpts struct {
+	Envs map[string]string
+	Name string
+	Replicas int32
+	Tag string
+	IsLocal bool
+	Memory, Cpu float64
 }

@@ -23,7 +23,7 @@ type AccountRepository interface {
 }
 
 type accountRepository struct {
-	db *gorm.DB
+	db    *gorm.DB
 	store session.Store
 }
 
@@ -90,5 +90,5 @@ func (a *accountRepository) GetAccountByEmail(email string) (*types.Account, err
 }
 
 func NewAccountRepository(db *gorm.DB, store session.Store) AccountRepository {
-	return &accountRepository{db:db, store: store}
+	return &accountRepository{db: db, store: store}
 }
