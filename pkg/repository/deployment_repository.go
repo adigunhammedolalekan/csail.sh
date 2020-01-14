@@ -82,8 +82,8 @@ func (d *defaultDeploymentRepository) CreateDeployment(app *types.App, reader io
 		Replicas: int32(replicas),
 		Tag:      dockerUrl,
 		IsLocal:  true,
-		Memory: 0.5,
-		Cpu: 0.5,
+		Memory: 0.1,
+		Cpu: 0.1,
 	}
 
 	result, err := d.k8s.DeployService(opt)

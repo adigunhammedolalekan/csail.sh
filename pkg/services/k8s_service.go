@@ -223,7 +223,7 @@ func (d *defaultK8sService) createDeployment(tag, name string, envs, labels map[
 	if err != nil {
 		return err
 	}
-	log.Println(cpu.String(), memory.String())
+
 	deployment := &appsV1.Deployment{}
 	deployment.Name = name
 	deployment.Labels = labels
@@ -259,8 +259,8 @@ func (d *defaultK8sService) createDeployment(tag, name string, envs, labels map[
 			v1.ResourceMemory: memory,
 		},
 		Requests: v1.ResourceList{
-			v1.ResourceCPU: memory,
-			v1.ResourceMemory: cpu,
+			v1.ResourceCPU: cpu,
+			v1.ResourceMemory: memory,
 		},
 	}
 	podTemplate := v1.PodTemplateSpec{}
