@@ -53,10 +53,11 @@ func NewServer(addr string) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	k8sService, err := createK8sService(cfg)
+	k8sClient, err := createK8sClient()
 	if err != nil {
 		return nil, err
 	}
+	k8sService := services.NewK8sService(k8sClient, cfg)
 	dockerService, err := createDockerService(cfg)
 	if err != nil {
 		return nil, err
@@ -73,13 +74,16 @@ func NewServer(addr string) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	resourseK8sClient := services.NewResourcesService(k8sClient)
 	sessionStore := session.NewRedisSessionStore(redisClient)
 	accountRepo := repository.NewAccountRepository(db, sessionStore)
 	appRepo := repository.NewAppsRepository(db, namegenerator.NewNameGenerator(time.Now().UnixNano()), k8sService)
 	deploymentRepo := repository.NewDeploymentRepository(db, dockerService, k8sService, proxyClient, appRepo, storageClient)
+	resourceRepo := repository.NewResourcesDeploymentRepository(db, appRepo, accountRepo, resourseK8sClient)
 
 	apiHandler := http.NewApiHandler(appRepo, accountRepo, sessionStore)
 	deploymentHandler := http.NewDeploymentHandler(deploymentRepo, appRepo, sessionStore)
+	resourcesDeploymentHandler := http.NewResourcesDeploymentHandler(resourceRepo, appRepo, sessionStore)
 	router := gin.Default()
 	apiRouter := router.Group("/api")
 	apiRouter.POST("/account/new", apiHandler.CreateAccountHandler)
@@ -94,6 +98,7 @@ func NewServer(addr string) (*Server, error) {
 	apiRouter.GET("/apps/scale/:appName", deploymentHandler.ScaleAppHandler)
 	apiRouter.GET("/apps/ps/:appName", deploymentHandler.ListRunningInstances)
 	apiRouter.PUT("/apps/rollback/:appName", deploymentHandler.RollbackDeploymentHandler)
+	apiRouter.POST("/apps/resource/new/:appName", resourcesDeploymentHandler.CreateResourceHandler)
 
 	return &Server{
 		addr:   addr,
@@ -101,7 +106,7 @@ func NewServer(addr string) (*Server, error) {
 	}, nil
 }
 
-func createK8sService(cfg *config.Config) (services.K8sService, error) {
+func createK8sClient() (*kubernetes.Clientset, error) {
 	k8sConfigPath := filepath.Join(os.Getenv("HOME"), ".kube", "config")
 	c, err := clientcmd.BuildConfigFromFlags("", k8sConfigPath)
 	if err != nil {
@@ -111,7 +116,7 @@ func createK8sService(cfg *config.Config) (services.K8sService, error) {
 	if err != nil {
 		return nil, err
 	}
-	return services.NewK8sService(k8sClient, cfg), nil
+	return k8sClient, nil
 }
 
 func createDockerService(cfg *config.Config) (services.DockerService, error) {
