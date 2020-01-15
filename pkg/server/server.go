@@ -6,6 +6,7 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/goombaio/namegenerator"
 	"github.com/joho/godotenv"
+	"github.com/minio/minio-go/v6"
 	"github.com/saas/hostgolang/pkg/config"
 	"github.com/saas/hostgolang/pkg/http"
 	proxy "github.com/saas/hostgolang/pkg/proxyclient"
@@ -60,10 +61,22 @@ func NewServer(addr string) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	minioClient, err := minio.New(
+		os.Getenv("MINIO_HOST"),
+		os.Getenv("MINIO_ACCESS_KEY"),
+		os.Getenv("MINIO_SECRET_KEY"),
+		false)
+	if err != nil {
+		return nil, err
+	}
+	storageClient, err := services.NewMinioStorageClient(minioClient)
+	if err != nil {
+		return nil, err
+	}
 	sessionStore := session.NewRedisSessionStore(redisClient)
 	accountRepo := repository.NewAccountRepository(db, sessionStore)
 	appRepo := repository.NewAppsRepository(db, namegenerator.NewNameGenerator(time.Now().UnixNano()), k8sService)
-	deploymentRepo := repository.NewDeploymentRepository(db, dockerService, k8sService, proxyClient, appRepo)
+	deploymentRepo := repository.NewDeploymentRepository(db, dockerService, k8sService, proxyClient, appRepo, storageClient)
 
 	apiHandler := http.NewApiHandler(appRepo, accountRepo, sessionStore)
 	deploymentHandler := http.NewDeploymentHandler(deploymentRepo, appRepo, sessionStore)
@@ -80,6 +93,7 @@ func NewServer(addr string) (*Server, error) {
 	apiRouter.DELETE("/apps/configs/unset/:appName", deploymentHandler.DeleteEnvironmentVars)
 	apiRouter.GET("/apps/scale/:appName", deploymentHandler.ScaleAppHandler)
 	apiRouter.GET("/apps/ps/:appName", deploymentHandler.ListRunningInstances)
+	apiRouter.PUT("/apps/rollback/:appName", deploymentHandler.RollbackDeploymentHandler)
 
 	return &Server{
 		addr:   addr,

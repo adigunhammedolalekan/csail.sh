@@ -224,6 +224,37 @@ func (handler *DeploymentHandler) ListRunningInstances(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, &SuccessResponse{Error: false, Message: "success", Data: data})
 }
 
+func (handler *DeploymentHandler) RollbackDeploymentHandler(ctx *gin.Context) {
+	account := handler.ensureAccount(ctx)
+	if account == nil {
+		return
+	}
+	appName := ctx.Param("appName")
+	version := ctx.Query("version")
+	if appName == "" || version == "" {
+		BadRequestResponse(ctx, "application name and target version are missing")
+		return
+	}
+	app, err := handler.appRepo.GetApp(appName)
+	if err != nil {
+		BadRequestResponse(ctx, err.Error())
+		return
+	}
+	if app.AccountId != account.ID {
+		ForbiddenRequestResponse(ctx, "forbidden")
+		return
+	}
+	result, err := handler.repo.RollbackDeployment(app.ID, version)
+	if err != nil {
+		InternalServerErrorResponse(ctx, err.Error())
+		return
+	}
+	ctx.JSON(http.StatusOK, &SuccessResponse{Error: false,
+		Message: fmt.Sprintf("application successfully rolled back to %s deployment", version),
+		Data:    result,
+	})
+}
+
 func (handler *DeploymentHandler) ensureAccount(ctx *gin.Context) *types.Account {
 	token := ctx.GetHeader(tokenHeaderName)
 	if token == "" {

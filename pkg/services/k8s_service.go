@@ -215,11 +215,11 @@ func (d *defaultK8sService) createService(serviceName string, serviceType v1.Ser
 }
 
 func (d *defaultK8sService) createDeployment(tag, name string, envs, labels map[string]string, ports []v1.ServicePort, replicas int32, mem, vCpu float64) error {
-	cpu, err := resource.ParseQuantity(fmt.Sprintf("%fm", vCpu * 1000))
+	cpu, err := resource.ParseQuantity(fmt.Sprintf("%fm", vCpu*1000))
 	if err != nil {
 		return err
 	}
-	memory, err := resource.ParseQuantity(fmt.Sprintf("%fMi", mem * 1000))
+	memory, err := resource.ParseQuantity(fmt.Sprintf("%fMi", mem*1000))
 	if err != nil {
 		return err
 	}
@@ -254,12 +254,12 @@ func (d *defaultK8sService) createDeployment(tag, name string, envs, labels map[
 	}}
 	container.ImagePullPolicy = v1.PullAlways
 	container.Resources = v1.ResourceRequirements{
-		Limits:   v1.ResourceList{
-			v1.ResourceCPU: cpu,
+		Limits: v1.ResourceList{
+			v1.ResourceCPU:    cpu,
 			v1.ResourceMemory: memory,
 		},
 		Requests: v1.ResourceList{
-			v1.ResourceCPU: cpu,
+			v1.ResourceCPU:    cpu,
 			v1.ResourceMemory: memory,
 		},
 	}

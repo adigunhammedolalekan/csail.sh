@@ -11,6 +11,7 @@ require (
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/gin-gonic/gin v1.5.0
+	github.com/go-ini/ini v1.51.1 // indirect
 	github.com/go-redis/redis v6.15.6+incompatible
 	github.com/golang/mock v1.2.0
 	github.com/google/uuid v1.1.1
@@ -19,6 +20,8 @@ require (
 	github.com/jinzhu/gorm v1.9.12
 	github.com/joho/godotenv v1.3.0
 	github.com/manifoldco/promptui v0.6.0 // indirect
+	github.com/minio/minio-go v6.0.14+incompatible
+	github.com/minio/minio-go/v6 v6.0.44
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/opencontainers/runc v0.1.1 // indirect

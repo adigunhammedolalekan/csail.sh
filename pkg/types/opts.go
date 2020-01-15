@@ -15,13 +15,14 @@ type AuthenticateAccountOpts struct {
 
 type DeploymentResult struct {
 	Address string `json:"address"`
+	Version string `json:"version"`
 }
 
 type CreateDeploymentOpts struct {
-	Envs map[string]string
-	Name string
-	Replicas int32
-	Tag string
-	IsLocal bool
+	Envs        map[string]string
+	Name        string
+	Replicas    int32
+	Tag         string
+	IsLocal     bool
 	Memory, Cpu float64
 }

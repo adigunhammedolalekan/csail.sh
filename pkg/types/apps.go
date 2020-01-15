@@ -26,33 +26,40 @@ type Environment struct {
 
 type Release struct {
 	gorm.Model
-	AppId        uint   `json:"app_id"`
-	LastCheckSum string `json:"last_check_sum"`
+	AppId         uint   `json:"app_id"`
+	LastCheckSum  string `json:"last_check_sum"`
+	VersionNumber int64  `json:"version"`
+}
+
+type ReleaseConfig struct {
+	Envs    []Environment `json:"envs"`
+	Version string
 }
 
 type Instance struct {
-	Id string `json:"id"`
-	Status string `json:"status"`
-	Name string `json:"name"`
+	Id      string `json:"id"`
+	Status  string `json:"status"`
+	Name    string `json:"name"`
 	Started string `json:"started"`
 }
 
 type DeploymentSettings struct {
 	gorm.Model
-	AppId uint `json:"app_id"`
+	AppId    uint `json:"app_id"`
 	Replicas uint `json:"replicas"`
-	CPUs uint `json:"cpus"`
-	Memory uint `json:"memory"`
+	CPUs     uint `json:"cpus"`
+	Memory   uint `json:"memory"`
 }
 
 func NewDeploymentSettings(appId, replicas uint) *DeploymentSettings {
 	return &DeploymentSettings{AppId: appId, Replicas: replicas}
 }
 
-func NewRelease(appId uint, checkSum string) *Release {
+func NewRelease(appId uint, checkSum string, v int64) *Release {
 	return &Release{
-		AppId:        appId,
-		LastCheckSum: checkSum,
+		AppId:         appId,
+		LastCheckSum:  checkSum,
+		VersionNumber: v,
 	}
 }
 

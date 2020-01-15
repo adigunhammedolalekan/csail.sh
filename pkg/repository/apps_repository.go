@@ -18,6 +18,7 @@ var ErrAppDataRetrieveFailed = errors.New("failed to retrieve app data. Please r
 type AppsRepository interface {
 	CreateApp(name string, accountId uint) (*types.App, error)
 	GetApp(name string) (*types.App, error)
+	GetAppById(appId uint) (*types.App, error)
 	GetAccountApps(accountId uint) ([]types.App, error)
 	UpdateEnvironmentVars(appName string, vars map[string]string) error
 	GetEnvironmentVars(appName string) ([]types.Environment, error)
@@ -59,6 +60,19 @@ func (a *appsRepository) CreateApp(name string, accountId uint) (*types.App, err
 func (a *appsRepository) GetApp(name string) (*types.App, error) {
 	app := &types.App{}
 	err := a.db.Table("apps").Where("app_name = ?", name).First(app).Error
+	switch err {
+	case gorm.ErrRecordNotFound:
+		return nil, err
+	case nil:
+		return app, nil
+	default:
+		return nil, ErrAppNotFound
+	}
+}
+
+func (a *appsRepository) GetAppById(appId uint) (*types.App, error) {
+	app := &types.App{}
+	err := a.db.Table("apps").Where("id = ?", appId).First(app).Error
 	switch err {
 	case gorm.ErrRecordNotFound:
 		return nil, err
