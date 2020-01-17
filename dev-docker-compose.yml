@@ -1,0 +1,47 @@
+version: "3"
+services:
+  database:
+    image: postgres:latest
+    container_name: hostgo-database
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: manman
+      POSTGRES_DB: hostgolang
+      PGDATA: /var/lib/postgresql/hostgolang/data/db
+    volumes:
+      - /mnt/hostgolang/data:/var/lib/postgresql/data
+    ports:
+      - "59010:5432"
+  redis:
+    image: redis:latest
+    ports:
+      - 59011:6379
+    volumes:
+      - /mnt/hostgolang/redis/data:/data
+  docker-registry:
+    restart: always
+    image: registry:2
+    ports:
+      - 5001:5000
+    environment:
+      REGISTRY_AUTH: htpasswd
+      REGISTRY_AUTH_HTPASSWD_REALM: Registry
+      REGISTRY_AUTH_HTPASSWD_PATH: /mnt/registry/auth/registry.password
+      REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: /mnt/registry/data
+    volumes:
+      - /mnt/storm/registry/data:/mnt/registry/data
+      - /mnt/storm/registry/auth/registry.password:/mnt/registry/auth/registry.password
+      - /mnt/storm/build:/mnt/build
+  minio:
+    image: minio/minio
+    container_name: minio_server
+    command: server /mnt/data
+    restart: always
+    environment:
+      MINIO_ACCESS_KEY: minioAccessKey
+      MINIO_SECRET_KEY: minioSecretKey
+    volumes:
+      - /mnt/hostgolag/minio/build:/mnt/data
+    ports:
+      - "59013:9000"
