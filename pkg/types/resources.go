@@ -4,8 +4,8 @@ import "github.com/jinzhu/gorm"
 
 type Resource struct {
 	gorm.Model
-	AppId uint `json:"app_id"`
-	Name string `json:"name"`
+	AppId uint   `json:"app_id"`
+	Name  string `json:"name"`
 }
 
 func NewResource(name string, appId uint) *Resource {
@@ -16,29 +16,29 @@ func NewResource(name string, appId uint) *Resource {
 }
 
 type ResourceDeploymentResult struct {
-	ID string `json:"id"`
-	Ip string `json:"ip"`
+	ID   string `json:"id"`
+	Ip   string `json:"ip"`
 	Port string `json:"port"`
 }
 
 type ResourceConfig struct {
 	gorm.Model
-	ResourceId uint `json:"resource_id"`
-	Quota *Quota `json:"quota"`
+	ResourceId uint   `json:"resource_id"`
+	Quota      *Quota `json:"quota"`
 }
 
 func NewResourceConfig(resId uint, quota *Quota) *ResourceConfig {
 	return &ResourceConfig{
 		ResourceId: resId,
-		Quota: quota,
+		Quota:      quota,
 	}
 }
 
 type ResourceEnv struct {
 	gorm.Model
-	ResourceId uint `json:"resource_id"`
-	EnvKey string `json:"env_key"`
-	EnvValue string `json:"env_value"`
+	ResourceId uint   `json:"resource_id"`
+	EnvKey     string `json:"env_key"`
+	EnvValue   string `json:"env_value"`
 }
 
 func NewResourceEnv(resId uint, k, v string) *ResourceEnv {
@@ -51,8 +51,8 @@ func NewResourceEnv(resId uint, k, v string) *ResourceEnv {
 
 type Quota struct {
 	gorm.Model
-	Memory float64 `json:"memory"`
-	Cpu float64 `json:"cpu"`
+	Memory      float64 `json:"memory"`
+	Cpu         float64 `json:"cpu"`
 	StorageSize float64 `json:"storage_size"`
 }
 

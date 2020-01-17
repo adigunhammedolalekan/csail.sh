@@ -26,7 +26,7 @@ type Server struct {
 }
 
 func NewServer(addr string) (*Server, error) {
-	if err := godotenv.Load("../creds.env"); err != nil {
+	if err := godotenv.Load("creds.env"); err != nil {
 		return nil, err
 	}
 	db, err := services.CreateDatabaseConnection(os.Getenv("DATABASE_URL"))
@@ -81,6 +81,7 @@ func NewServer(addr string) (*Server, error) {
 	deploymentRepo := repository.NewDeploymentRepository(db, dockerService, k8sService, proxyClient, appRepo, storageClient)
 	resourceRepo := repository.NewResourcesDeploymentRepository(db, appRepo, accountRepo, resourseK8sClient)
 
+	rd := http.NewHtmlRenderer()
 	apiHandler := http.NewApiHandler(appRepo, accountRepo, sessionStore)
 	deploymentHandler := http.NewDeploymentHandler(deploymentRepo, appRepo, sessionStore)
 	resourcesDeploymentHandler := http.NewResourcesDeploymentHandler(resourceRepo, appRepo, sessionStore)
@@ -99,7 +100,14 @@ func NewServer(addr string) (*Server, error) {
 	apiRouter.GET("/apps/ps/:appName", deploymentHandler.ListRunningInstances)
 	apiRouter.PUT("/apps/rollback/:appName", deploymentHandler.RollbackDeploymentHandler)
 	apiRouter.POST("/apps/resource/new/:appName", resourcesDeploymentHandler.CreateResourceHandler)
+	apiRouter.DELETE("/apps/resource/remove/:appName", resourcesDeploymentHandler.DeleteResourceHandler)
 
+	router.Static("/css", "./frontend/css")
+	router.Static("/f2/css", "./frontend/f2/css")
+	// HTML
+	router.GET("/login", rd.RenderLogin)
+	router.GET("/signup", rd.SignUp)
+	router.GET("/reset", rd.ForgotPassword)
 	return &Server{
 		addr:   addr,
 		router: router,
@@ -128,6 +136,7 @@ func createDockerService(cfg *config.Config) (services.DockerService, error) {
 }
 
 func (s *Server) Run() error {
+	s.router.LoadHTMLGlob("frontend/*.html")
 	if err := s.router.Run(s.addr); err != nil {
 		return err
 	}

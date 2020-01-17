@@ -20,7 +20,7 @@ func CreateDatabaseConnection(connectUri string) (*gorm.DB, error) {
 
 func migrate(db *gorm.DB) {
 	db.Debug().AutoMigrate(&types.Account{},
-	&types.App{}, &types.Environment{},
-	&types.Release{}, &types.DeploymentSettings{},
-	&types.Resource{}, &types.ResourceEnv{}, &types.ResourceConfig{}, &types.Quota{})
+		&types.App{}, &types.Environment{},
+		&types.Release{}, &types.DeploymentSettings{},
+		&types.Resource{}, &types.ResourceEnv{}, &types.ResourceConfig{}, &types.Quota{})
 }

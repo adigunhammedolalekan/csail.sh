@@ -20,6 +20,7 @@ type App struct {
 type Environment struct {
 	gorm.Model
 	AppId    uint   `json:"app_id"`
+	ResId uint `json:"res_id"` // for resources
 	EnvKey   string `json:"env_key"`
 	EnvValue string `json:"env_value"`
 }
@@ -63,11 +64,12 @@ func NewRelease(appId uint, checkSum string, v int64) *Release {
 	}
 }
 
-func NewEnvVariable(appId uint, k, v string) *Environment {
+func NewEnvVariable(appId, resId uint, k, v string) *Environment {
 	return &Environment{
 		AppId:    appId,
 		EnvKey:   k,
 		EnvValue: v,
+		ResId: resId,
 	}
 }
 

@@ -4,7 +4,7 @@ import "github.com/saas/hostgolang/pkg/res"
 
 type minioResource struct {
 	memory, cpu, storageSize float64
-	envs map[string]string
+	envs                     map[string]string
 }
 
 func (m *minioResource) PublishableEnvs() map[string]string {

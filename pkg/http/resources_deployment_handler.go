@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/saas/hostgolang/pkg/repository"
 	"github.com/saas/hostgolang/pkg/session"
@@ -8,10 +9,12 @@ import (
 	"net/http"
 )
 
+const GB = 1024
+
 type ResourcesDeploymentHandler struct {
-	repo repository.ResourcesDeployment
+	repo    repository.ResourcesDeployment
 	appRepo repository.AppsRepository
-	store session.Store
+	store   session.Store
 }
 
 func NewResourcesDeploymentHandler(repo repository.ResourcesDeployment, appRepo repository.AppsRepository, store session.Store) *ResourcesDeploymentHandler {
@@ -41,9 +44,9 @@ func (handler *ResourcesDeploymentHandler) CreateResourceHandler(ctx *gin.Contex
 	opt := &types.DeployResourcesOpt{
 		AppName:     appName,
 		Name:        resourceName,
-		Memory:      0.2,
-		Cpu:         0.1,
-		StorageSize: 2, // in GB
+		Memory:      0.02,
+		Cpu:         0.01,
+		StorageSize: 2 * GB, // in GB
 	}
 	result, err := handler.repo.DeployResource(opt)
 	if err != nil {
@@ -53,6 +56,38 @@ func (handler *ResourcesDeploymentHandler) CreateResourceHandler(ctx *gin.Contex
 	ctx.JSON(http.StatusOK, &SuccessResponse{Error: false, Message: "success", Data: result})
 }
 
+func (handler *ResourcesDeploymentHandler) DeleteResourceHandler(ctx *gin.Context) {
+	account := handler.ensureAccount(ctx)
+	if account == nil {
+		return
+	}
+	appName := ctx.Param("appName")
+	resName := ctx.Query("name")
+	if appName == "" || resName == "" {
+		BadRequestResponse(ctx, "application name or resource name is missing")
+		return
+	}
+	app, err := handler.appRepo.GetApp(appName)
+	if err != nil {
+		BadRequestResponse(ctx, err.Error())
+		return
+	}
+	if app.AccountId != account.ID {
+		ForbiddenRequestResponse(ctx, "forbidden")
+		return
+	}
+	res, err := handler.repo.GetResource(app.ID, resName)
+	if err != nil {
+		BadRequestResponse(ctx, err.Error())
+		return
+	}
+	err = handler.repo.DeleteResource(app, res.ID, resName);
+	if err != nil {
+		InternalServerErrorResponse(ctx, err.Error())
+		return
+	}
+	ctx.JSON(http.StatusOK, &SuccessResponse{Error: false, Message: fmt.Sprintf("resource %s removed successfully", resName)})
+}
 
 func (handler *ResourcesDeploymentHandler) ensureAccount(ctx *gin.Context) *types.Account {
 	token := ctx.GetHeader(tokenHeaderName)

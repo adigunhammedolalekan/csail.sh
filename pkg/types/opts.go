@@ -28,9 +28,9 @@ type CreateDeploymentOpts struct {
 }
 
 type DeployResourcesOpt struct {
-	AppName string `json:"app_name"`
-	Name string `json:"name"`
-	Memory float64 `json:"memory"`
-	Cpu float64 `json:"cpu"`
+	AppName     string  `json:"app_name"`
+	Name        string  `json:"name"`
+	Memory      float64 `json:"memory"`
+	Cpu         float64 `json:"cpu"`
 	StorageSize float64 `json:"storage_size"`
 }

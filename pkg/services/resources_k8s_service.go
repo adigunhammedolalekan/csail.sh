@@ -17,6 +17,7 @@ import (
 
 type ResourcesService interface {
 	DeployResource(app *types.App, envs []types.ResourceEnv, res res.Res) (*types.ResourceDeploymentResult, error)
+	DeleteResource(app *types.App, name string) error
 }
 
 type defaultResourcesService struct {
@@ -68,8 +69,8 @@ func (d *defaultResourcesService) DeployResource(app *types.App, resourcesEnvs [
 	}
 
 	result := &types.ResourceDeploymentResult{
-		ID: string(st.UID),
-		Ip: lbAddress,
+		ID:   string(st.UID),
+		Ip:   lbAddress,
 		Port: fmt.Sprintf("%d", res.Port()),
 	}
 	return result, nil
@@ -110,18 +111,30 @@ func (d *defaultResourcesService) createResourceService(serviceName string, targ
 	return s, nil
 }
 
+func (d *defaultResourcesService) DeleteResource(app *types.App, name string) error {
+	svcName := fmt.Sprintf("svc-%s-%s", name, app.AppName)
+	stName := fmt.Sprintf("st-%s-%s", name, app.AppName)
+	if err := d.client.CoreV1().Services(stormNs).Delete(svcName, &metav1.DeleteOptions{}); err != nil {
+		return err
+	}
+	if err := d.client.AppsV1().StatefulSets(stormNs).Delete(stName, &metav1.DeleteOptions{}); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (d *defaultResourcesService) createResourceStatefulSet(appName string, svc *v1.Service, res res.Res) (*appsv1.StatefulSet, error) {
-	name := fmt.Sprintf("st-%s", appName)
+	name := fmt.Sprintf("st-%s-%s", res.Name(), appName)
 	if st, err := d.client.AppsV1().StatefulSets(stormNs).Get(name, metav1.GetOptions{}); err == nil && st.Name != "" {
 		if err := d.client.AppsV1().StatefulSets(stormNs).Delete(name, &metav1.DeleteOptions{}); err != nil {
 			return nil, err
 		}
 	}
-	cpu, err := resource.ParseQuantity(fmt.Sprintf("%fm", res.Quota().Cpu * 1000))
+	cpu, err := resource.ParseQuantity(fmt.Sprintf("%fm", res.Quota().Cpu*1000))
 	if err != nil {
 		return nil, err
 	}
-	memory, err := resource.ParseQuantity(fmt.Sprintf("%fMi", res.Quota().Memory * 1000))
+	memory, err := resource.ParseQuantity(fmt.Sprintf("%fMi", res.Quota().Memory*1000))
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +148,7 @@ func (d *defaultResourcesService) createResourceStatefulSet(appName string, svc 
 	container.Name = fmt.Sprintf("%s-cont", name)
 	container.Image = res.Image()
 	envs := make([]v1.EnvVar, 0)
-	for k, v :=  range res.Envs() {
+	for k, v := range res.Envs() {
 		envs = append(envs, v1.EnvVar{Name: k, Value: v})
 	}
 	if len(res.Args()) > 0 {
@@ -144,18 +157,18 @@ func (d *defaultResourcesService) createResourceStatefulSet(appName string, svc 
 	}
 	container.Env = envs
 	container.Resources = v1.ResourceRequirements{
-		Limits:   v1.ResourceList{
+		Limits: v1.ResourceList{
 			v1.ResourceMemory: memory,
-			v1.ResourceCPU: cpu,
+			v1.ResourceCPU:    cpu,
 		},
 		Requests: v1.ResourceList{
-			v1.ResourceCPU: cpu,
+			v1.ResourceCPU:    cpu,
 			v1.ResourceMemory: memory,
 		},
 	}
 	container.Ports = []v1.ContainerPort{{
 		Name:          truncString(fmt.Sprintf("%15s", name+"-port")),
-		ContainerPort: 1,
+		ContainerPort: int32(res.Port()),
 		Protocol:      "TCP",
 	}}
 	st.Spec.Replicas = Int32(1)
@@ -182,6 +195,6 @@ func (d *defaultResourcesService) createResourceStatefulSet(appName string, svc 
 			v1.ResourceStorage: storageQuantity,
 		},
 	}
-	st.Spec.VolumeClaimTemplates = []v1.PersistentVolumeClaim{pvc,}
+	st.Spec.VolumeClaimTemplates = []v1.PersistentVolumeClaim{pvc}
 	return d.client.AppsV1().StatefulSets(stormNs).Create(st)
 }

@@ -93,7 +93,7 @@ func (a *appsRepository) UpdateEnvironmentVars(name string, envs map[string]stri
 		if ev, err := a.GetEnvironment(k, appId); err == nil && len(ev.EnvValue) > 0 {
 			err = a.DeleteEnvironmentVar(k, appId)
 		}
-		e := types.NewEnvVariable(appId, k, v)
+		e := types.NewEnvVariable(appId, 0, k, v)
 		if err := a.db.Create(e).Error; err != nil {
 			return ErrAppUpdateFailed
 		}

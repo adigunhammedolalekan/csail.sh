@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	s, err := server.NewServer(":4001")
+	s, err := server.NewServer(":4005")
 	if err != nil {
 		log.Fatal(err)
 	}
