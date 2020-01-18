@@ -91,6 +91,7 @@ func (d *defaultK8sService) DeployService(opt *types.CreateDeploymentOpts) (*typ
 	}
 	nodeName := newDeployment.Spec.Template.Spec.NodeName
 	addr, err := d.getNodeIp(nodeName)
+	log.Println("GetNode error: ", err)
 	if err != nil || addr == "" {
 		addr = "http://localhost"
 	}
@@ -348,6 +349,7 @@ func (d *defaultK8sService) getNodeIp(nodeName string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	log.Println("Node: ", nodeName, nd)
 	addrs := nd.Status.Addresses
 	nodeIp := ""
 	for _, addr := range addrs {
