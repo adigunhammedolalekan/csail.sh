@@ -90,12 +90,17 @@ func (d *defaultK8sService) DeployService(opt *types.CreateDeploymentOpts) (*typ
 		return nil, err
 	}
 	nodeName := newDeployment.Spec.Template.Spec.NodeName
-	go func(n string) {
+	go func() {
 		log.Println("Running GR...")
+		nd, err := d.client.AppsV1().Deployments(stormNs).Get(name, metav1.GetOptions{})
+		if err != nil {
+			log.Println(err)
+			return
+		}
 		time.Sleep(3 * time.Minute)
-		_, err = d.getNodeIp(n)
+		_, err = d.getNodeIp(nd.Spec.Template.Spec.NodeName)
 		log.Println("GC error: ", err)
-	}(nodeName)
+	}()
 
 	addr, err := d.getNodeIp(nodeName)
 	log.Println("GetNode error: ", err)
