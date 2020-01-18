@@ -91,12 +91,12 @@ func (d *defaultResourcesService) createResourceService(serviceName string, targ
 	svc.Name = serviceName
 	svc.Labels = label
 	svc.Namespace = stormNs
-	servicePort := findAvailablePort()
+	// servicePort := findAvailablePort()
 	port := v1.ServicePort{
 		Name:       truncString(fmt.Sprintf("%15s", serviceName+"-serviceport")),
 		Protocol:   "TCP",
 		Port:       int32(targetPort),
-		TargetPort: intstr.FromInt(servicePort),
+		TargetPort: intstr.FromInt(targetPort),
 	}
 	svc.Spec = v1.ServiceSpec{
 		Ports:    []v1.ServicePort{port},
