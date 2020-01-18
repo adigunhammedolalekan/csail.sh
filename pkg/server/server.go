@@ -41,7 +41,7 @@ func NewServer(addr string) (*Server, error) {
 	if err := redisClient.Ping().Err(); err != nil {
 		return nil, err
 	}
-	cfg := &config.Config{
+	cfg := &config.Config {
 		ProxyServerAddress: "http://localhost:9093",
 		Registry: config.RegistryConfig{
 			Url:      "registry.hostgolang.com",

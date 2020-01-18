@@ -85,26 +85,25 @@ func (d *defaultK8sService) DeployService(opt *types.CreateDeploymentOpts) (*typ
 		return nil, err
 	}
 
-	addr := ""
+	newDeployment, err := d.client.AppsV1().Deployments(stormNs).Get(name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	nodeName := newDeployment.Spec.Template.Spec.NodeName
+	addr, err := d.getNodeIp(nodeName)
+	if err != nil || addr == "" {
+		addr = "http://localhost"
+	}
+	log.Println("NodeIp: ", addr)
+	accessAddr := ""
 	for _, p := range ports {
 		if opt.IsLocal {
 			if nodePort := p.NodePort; nodePort != 0 {
-				addr = fmt.Sprintf("http://localhost:%d", nodePort)
-			}
-		} else {
-			if lbIp := svc.Spec.LoadBalancerIP; lbIp == "" {
-				externalIps := svc.Spec.ExternalIPs
-				for _, ip := range externalIps {
-					if ip != "" {
-						lbIp = ip
-						break
-					}
-				}
-				addr = fmt.Sprintf("http://%s", lbIp)
+				accessAddr = fmt.Sprintf("%s:%d", addr, nodePort)
 			}
 		}
 	}
-	return &types.DeploymentResult{Address: addr}, nil
+	return &types.DeploymentResult{Address: accessAddr}, nil
 }
 
 func (d *defaultK8sService) UpdateEnvs(appName string, envs []types.Environment) error {
@@ -237,6 +236,7 @@ func (d *defaultK8sService) createDeployment(tag, name string, envs, labels map[
 			Value: v,
 		})
 	}
+
 	var port int32 = 0
 	for _, p := range ports {
 		if targetPort := p.TargetPort.IntVal; targetPort != 0 {
@@ -343,6 +343,22 @@ func (d *defaultK8sService) getPodsBySelector(selector string) ([]v1.Pod, error)
 	return pods.Items, nil
 }
 
+func (d *defaultK8sService) getNodeIp(nodeName string) (string, error) {
+	nd, err := d.client.CoreV1().Nodes().Get(nodeName, metav1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+	addrs := nd.Status.Addresses
+	nodeIp := ""
+	for _, addr := range addrs {
+		if addr.Type == v1.NodeExternalIP && addr.Address != "" {
+			nodeIp = addr.Address
+			break
+		}
+	}
+	return nodeIp, nil
+}
+
 // dockerConfigJson returns a json rep of user's
 // docker registry auth credentials.
 func (d *defaultK8sService) dockerConfigJson() ([]byte, error) {
@@ -391,3 +407,4 @@ func truncString(s string) string {
 	}
 	return strings.TrimSpace(s[0:14])
 }
+
