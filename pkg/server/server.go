@@ -44,7 +44,7 @@ func NewServer(addr string) (*Server, error) {
 	cfg := &config.Config{
 		ProxyServerAddress: "http://localhost:9093",
 		Registry: config.RegistryConfig{
-			Url:      "hostgolang.com:5001",
+			Url:      "registry.hostgolang.com",
 			Username: "lekan",
 			Password: "manman",
 		},
