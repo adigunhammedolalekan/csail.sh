@@ -17,7 +17,7 @@ spec:
           ports:
             - containerPort: 4005
               protocol: TCP
-              name: tcp-port
+              name: access-tcp-port
           env:
             - name: K8S_CONFIG_DIR
               value: /var/kube/config
