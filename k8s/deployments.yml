@@ -18,9 +18,9 @@ spec:
             - containerPort: 4005
               protocol: TCP
               name: access-tcp-port
-          env:
-            - name: K8S_CONFIG_DIR
-              value: /var/kube/config
+          envFrom:
+            - configMapRef:
+                name: k8s-config
       imagePullSecrets:
         - name: hostgo-secret
     metadata:
