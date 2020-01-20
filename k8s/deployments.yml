@@ -18,7 +18,11 @@ spec:
             - containerPort: 4005
               protocol: TCP
               name: access-port
-
+      imagePullSecrets:
+        - name: hostgo-secret
+    metadata:
+      labels:
+        app: app-service
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -30,7 +34,7 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: app-service
+      app: proxy-service
   template:
     spec:
       containers:
@@ -46,3 +50,11 @@ spec:
             - containerPort: 443
               protocol: TCP
               name: https-port
+          env:
+            - name: REDIS_HOST
+              value: proxy-redis-service:6379
+      imagePullSecrets:
+        - name: hostgo-secret
+    metadata:
+      labels:
+        app: proxy-service

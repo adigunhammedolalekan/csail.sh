@@ -65,7 +65,6 @@ spec:
   selector:
     app: app-service
 
-
 ---
 apiVersion: v1
 kind: Service
