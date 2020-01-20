@@ -102,6 +102,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: object-store-config
+          command:
+            - server
+          args:
+            - /data
   volumeClaimTemplates:
     - metadata:
         name: object-store-volume
