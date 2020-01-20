@@ -17,10 +17,11 @@ spec:
           ports:
             - containerPort: 4005
               protocol: TCP
-              name: access-tcp-port
+              name: tcp-port
           envFrom:
             - configMapRef:
                 name: k8s-config
+          imagePullPolicy: Always
       imagePullSecrets:
         - name: hostgo-secret
     metadata:
