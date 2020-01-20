@@ -19,6 +19,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"log"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -121,7 +122,7 @@ func createK8sClient() (*kubernetes.Clientset, error) {
 	k8sConfigPath := ""
 	if b64K8s != "" {
 		k8sConfigPath = ".config"
-		decoded, err := base64.StdEncoding.DecodeString(b64K8s)
+		decoded, err := base64.StdEncoding.DecodeString(strings.TrimSpace(b64K8s))
 		if err != nil {
 			return nil, err
 		}
