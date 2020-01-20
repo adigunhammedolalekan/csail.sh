@@ -94,7 +94,7 @@ spec:
           image: minio/minio
           ports:
             - containerPort: 9000
-              name: acc-tcp-port
+              name: minio-tcp-port
           volumeMounts:
             - name: object-store-volume
               mountPath: /mnt/data
