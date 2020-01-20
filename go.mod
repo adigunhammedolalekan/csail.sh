@@ -13,14 +13,15 @@ require (
 	github.com/gin-gonic/gin v1.5.0
 	github.com/go-ini/ini v1.51.1 // indirect
 	github.com/go-redis/redis v6.15.6+incompatible
-	github.com/golang/mock v1.2.0
+	github.com/go-redis/redis/v7 v7.0.0-beta.5
+	github.com/golang/mock v1.3.1
 	github.com/google/uuid v1.1.1
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
-	github.com/gorilla/mux v1.7.3 // indirect
 	github.com/jinzhu/gorm v1.9.12
 	github.com/joho/godotenv v1.3.0
 	github.com/manifoldco/promptui v0.6.0 // indirect
-	github.com/minio/minio-go v6.0.14+incompatible
+	github.com/mholt/certmagic v0.9.1
+	github.com/minio/minio-go v6.0.14+incompatible // indirect
 	github.com/minio/minio-go/v6 v6.0.44
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
@@ -33,7 +34,6 @@ require (
 	github.com/spf13/viper v1.6.1 // indirect
 	golang.org/x/crypto v0.0.0-20191205180655-e7c4368fe9dd
 	golang.org/x/oauth2 v0.0.0-20191202225959-858c2ad4c8b6 // indirect
-	golang.org/x/sync v0.0.0-20190423024810-112230192c58 // indirect
 	golang.org/x/sys v0.0.0-20200107162124-548cf772de50 // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	gopkg.in/ini.v1 v1.51.1 // indirect

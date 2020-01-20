@@ -42,7 +42,7 @@ func NewServer(addr string) (*Server, error) {
 		return nil, err
 	}
 	cfg := &config.Config {
-		ProxyServerAddress: "http://localhost:9093",
+		ProxyServerAddress: "http://proxy:9093",
 		Registry: config.RegistryConfig{
 			Url:      "registry.hostgolang.com",
 			Username: "lekan",
@@ -115,7 +115,10 @@ func NewServer(addr string) (*Server, error) {
 }
 
 func createK8sClient() (*kubernetes.Clientset, error) {
-	k8sConfigPath := filepath.Join(os.Getenv("HOME"), ".kube", "config")
+	k8sConfigPath := ""
+	if k8sConfigPath = os.Getenv("K8S_CONFIG_DIR"); k8sConfigPath == "" {
+		k8sConfigPath = filepath.Join(os.Getenv("HOME"), ".kube", "config")
+	}
 	c, err := clientcmd.BuildConfigFromFlags("", k8sConfigPath)
 	if err != nil {
 		return nil, err

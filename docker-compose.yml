@@ -1,5 +1,6 @@
 version: "3"
 services:
+  # MAIN APPLICATION DATABASE
   database:
     image: postgres:latest
     container_name: hostgo-database
@@ -13,12 +14,16 @@ services:
       - "${HOME}/mnt/hostgolang/data:/var/lib/postgresql/data"
     ports:
       - "59010:5432"
+
+  # REDIS SESSION STORE
   redis:
     image: redis:latest
     ports:
       - 59011:6379
     volumes:
       - "${HOME}/mnt/hostgolang/redis/data:/data"
+
+  # LOCAL DOCKER REGISTRY
   docker-registry:
     restart: always
     image: registry:2
@@ -33,6 +38,8 @@ services:
       - "${HOME}/mnt/hostgo/registry/data:/mnt/registry/data"
       - "${HOME}/mnt/hostgo/registry/auth/registry.password:/mnt/registry/auth/registry.password"
       - "${HOME}/mnt/hostgo/build:/mnt/build"
+
+  # RELEASE OBJECT STORAGE
   minio:
     image: minio/minio
     container_name: minio_server
@@ -45,3 +52,44 @@ services:
       - "${HOME}/mnt/hostgolang/minio/build:/mnt/data"
     ports:
       - "59013:9000"
+
+  # APPLICATION
+  app:
+    build: ./
+    container_name: hostgolang-web
+    volumes:
+      - "${HOME}/.kube/config:/var/kube/config"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    depends_on:
+      - database
+      - minio
+      - redis
+      - docker-registry
+      - proxy
+    restart: on-failure
+    environment:
+      - K8S_CONFIG_DIR=/var/kube/config
+    ports:
+      - "4005:4005"
+
+  # PROXY SERVICE DISCOVERY STORAGE
+  redis-proxy:
+    image: redis:latest
+    ports:
+      - 59014:6379
+    volumes:
+      - "${HOME}/mnt/hostgolang/proxy-redis/data:/data"
+
+  # PROXY
+  proxy:
+    image: registry.hostgolang.com/proxy:latest
+    container_name: hostgo-proxy
+    volumes:
+      - ${HOME}/mnt/certs:/mnt/certs
+    restart: on-failure
+    depends_on:
+      - redis-proxy
+    environment:
+      - REDIS_HOST=redis-proxy:6379
+    ports:
+      - "9093:9093"
