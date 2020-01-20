@@ -1,6 +1,9 @@
 build:
 	./build.sh
 
+compile:
+	export GOOS=linux && go build -o hostgolang cmd/cmd.go
+
 kube-deploy:
 	# kubectl apply -f k8s/secrets.yml
 	kubectl apply -f k8s/configs.yml

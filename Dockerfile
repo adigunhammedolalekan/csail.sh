@@ -1,11 +1,10 @@
-FROM golang:alpine3.11
+FROM alpine:3.2
+RUN apk update && apk add --no-cache ca-certificates
 RUN apk add build-base
-COPY . /app
 RUN mkdir -p /var/kube
 RUN touch /var/kube/config
 COPY k8s-config /var/kube/config
+ADD . /app
 WORKDIR /app
-RUN go get ./...
-ENV GOOS linux
-RUN go build -o hostgolang cmd/cmd.go
-ENTRYPOINT [ "./hostgolang" ]
+RUN chmod +x /app/hostgolang
+ENTRYPOINT [ "/app/hostgolang" ]
