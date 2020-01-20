@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/base64"
 	"github.com/docker/docker/client"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
@@ -14,12 +13,10 @@ import (
 	"github.com/saas/hostgolang/pkg/repository"
 	"github.com/saas/hostgolang/pkg/services"
 	"github.com/saas/hostgolang/pkg/session"
-	"io/ioutil"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
-	"log"
 	"os"
-	"strings"
+	"path/filepath"
 	"time"
 )
 
@@ -118,20 +115,10 @@ func NewServer(addr string) (*Server, error) {
 }
 
 func createK8sClient() (*kubernetes.Clientset, error) {
-	b64K8s := os.Getenv("K8S_CONFIG_B64")
 	k8sConfigPath := ""
-	if b64K8s != "" {
-		k8sConfigPath = ".config"
-		decoded, err := base64.StdEncoding.DecodeString(strings.TrimSpace(b64K8s))
-		if err != nil {
-			return nil, err
-		}
-		log.Println("Decoded: ", string(decoded))
-		if err := ioutil.WriteFile(k8sConfigPath, decoded, os.ModePerm); err != nil {
-			return nil, err
-		}
+	if k8sConfigPath = os.Getenv("K8S_CONFIG_DIR"); k8sConfigPath == "" {
+		k8sConfigPath = filepath.Join(os.Getenv("HOME"), ".kube", "config")
 	}
-
 	c, err := clientcmd.BuildConfigFromFlags("", k8sConfigPath)
 	if err != nil {
 		return nil, err
