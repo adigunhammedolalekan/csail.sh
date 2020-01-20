@@ -1,0 +1,149 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: hostgo-database
+spec:
+  serviceName: "db-service"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db-service
+  template:
+    metadata:
+      labels:
+        app: db-service
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:latest
+          envFrom:
+            - configMapRef:
+                name: db-config
+          ports:
+            - containerPort: 5432
+              name: tcp-port
+          volumeMounts:
+            - name: db-volume
+              mountPath: /var/lib/postgresql/data
+              subPath: postgres
+  volumeClaimTemplates:
+    - metadata:
+        name: db-volume
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: do-block-storage
+        resources:
+          requests:
+            storage: 5Gi
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-session-store
+spec:
+  serviceName: "redis-service"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-service
+  template:
+    metadata:
+      labels:
+        app: redis-service
+    spec:
+      containers:
+        - name: redis-session-store
+          image: redis:latest
+          ports:
+            - containerPort: 6379
+              name: tcp-port
+          volumeMounts:
+            - name: redis-volume
+              mountPath: /var/sessions/redis/data
+              subPath: redis
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-volume
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: do-block-storage
+        resources:
+          requests:
+            storage: 2Gi
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: release-store
+spec:
+  serviceName: "storage-service"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: storage-service
+  template:
+    metadata:
+      labels:
+        app: storage-service
+    spec:
+      containers:
+        - name: release-store-cont
+          image: minio/minio
+          ports:
+            - containerPort: 9000
+              name: tcp-port
+          volumeMounts:
+            - name: object-store-volume
+              mountPath: /mnt/data
+              subPath: data
+          envFrom:
+            - configMapRef:
+                name: object-store-config
+  volumeClaimTemplates:
+    - metadata:
+        name: object-store-volume
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: do-block-storage
+        resources:
+          requests:
+            storage: 5Gi
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-proxy-store
+spec:
+  serviceName: "proxy-redis-service"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: proxy-redis-service
+  template:
+    metadata:
+      labels:
+        app: proxy-redis-service
+    spec:
+      containers:
+        - name: proxy-redis-store
+          image: redis:latest
+          ports:
+            - containerPort: 6379
+              name: tcp-port
+          volumeMounts:
+            - name: proxy-redis-volume
+              mountPath: /var/proxy/redis/data
+              subPath: redis
+  volumeClaimTemplates:
+    - metadata:
+        name: proxy-redis-volume
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: do-block-storage
+        resources:
+          requests:
+            storage: 2Gi

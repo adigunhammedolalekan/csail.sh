@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-config
+  labels:
+    app: db-config
+data:
+  POSTGRES_DB: hostgolang
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: manman
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: object-store-config
+  labels:
+    app: storage-service
+data:
+  MINIO_ACCESS_KEY: yourMinioKey
+  MINIO_SECRET_KEY: yourMinioSecret

@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hostgo-app
+  labels:
+    app: app-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-service
+  template:
+    spec:
+      containers:
+        - name: hostgo-container
+          image: registry.hostgolang.com/hostgo:latest
+          ports:
+            - containerPort: 4005
+              protocol: TCP
+              name: access-port
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: proxy
+  labels:
+    app: proxy-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-service
+  template:
+    spec:
+      containers:
+        - name: proxy-container
+          image: registry.hostgolang.com/proxy:latest
+          ports:
+            - containerPort: 9093
+              protocol: TCP
+              name: proxy-port
+            - containerPort: 80
+              protocol: TCP
+              name: http-port
+            - containerPort: 443
+              protocol: TCP
+              name: https-port

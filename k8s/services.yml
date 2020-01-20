@@ -1,0 +1,101 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  labels:
+    app: redis-service
+spec:
+  type: ClusterIP
+  ports:
+    - name: http-port
+      port: 6379
+      protocol: TCP
+      targetPort: 6379
+  selector:
+    app: redis-service
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-service
+  labels:
+    app: db-service
+spec:
+  type: ClusterIP
+  ports:
+    - name: http-port
+      port: 5432
+      protocol: TCP
+      targetPort: 5432
+  selector:
+    app: db-service
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: storage-service
+  labels:
+    app: storage-service
+spec:
+  type: ClusterIP
+  ports:
+    - name: http-port
+      port: 9000
+      protocol: TCP
+      targetPort: 9000
+  selector:
+    app: storage-service
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-service
+  labels:
+    app: app-service
+spec:
+  type: ClusterIP
+  ports:
+    - name: http-port
+      port: 4005
+      protocol: TCP
+      targetPort: 4005
+  selector:
+    app: app-service
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: proxy-redis-service
+  labels:
+    app: proxy-redis-service
+spec:
+  type: ClusterIP
+  ports:
+    - name: proxy-redis-port
+      port: 6379
+      protocol: TCP
+      targetPort: 6379
+  selector:
+    app: proxy-redis-service
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: proxy-service
+  labels:
+    app: proxy-service
+spec:
+  type: ClusterIP
+  ports:
+    - name: http-port
+      port: 9093
+      protocol: TCP
+      targetPort: 9093
+  selector:
+    app: proxy-service
