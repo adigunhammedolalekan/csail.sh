@@ -50,7 +50,7 @@ spec:
               name: proxy-port
             - containerPort: 80
               protocol: TCP
-              name: access-http-port
+              name: acc-httpport
             - containerPort: 443
               protocol: TCP
               name: https-port
