@@ -131,7 +131,7 @@ func createK8sClient() (*kubernetes.Clientset, error) {
 }
 
 func createDockerService(cfg *config.Config) (services.DockerService, error) {
-	docker, err := client.NewClientWithOpts(client.FromEnv)
+	docker, err := client.NewClientWithOpts(client.FromEnv, client.WithVersion("1.37"))
 	if err != nil {
 		return nil, err
 	}
