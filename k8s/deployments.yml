@@ -5,7 +5,7 @@ metadata:
   labels:
     app: main-app
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: app-service
@@ -41,7 +41,7 @@ metadata:
   labels:
     app: proxy-service
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: proxy-service

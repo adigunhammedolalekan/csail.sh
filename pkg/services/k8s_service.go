@@ -25,6 +25,7 @@ import (
 
 const stormNs = "namespace-storm"
 const registrySecretName = "storm-secret"
+const validPortRange = 65535
 
 //go:generate mockgen -destination=mocks/k8s_service_mock.go -package=mocks github.com/saas/hostgolang/pkg/services K8sService
 type K8sService interface {
@@ -62,10 +63,7 @@ func (d *defaultK8sService) createNameSpace() error {
 }
 
 func (d *defaultK8sService) DeployService(opt *types.CreateDeploymentOpts) (*types.DeploymentResult, error) {
-	var serviceType = v1.ServiceTypeNodePort
-	if !opt.IsLocal {
-		serviceType = v1.ServiceTypeLoadBalancer
-	}
+	var serviceType = v1.ServiceTypeClusterIP
 	if err := d.createRegistrySecret(); err != nil {
 		return nil, err
 	}
@@ -85,22 +83,11 @@ func (d *defaultK8sService) DeployService(opt *types.CreateDeploymentOpts) (*typ
 		return nil, err
 	}
 
-	newDeployment, err := d.client.AppsV1().Deployments(stormNs).Get(name, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-	nodeName := newDeployment.Spec.Template.Spec.NodeName
-	addr, err := d.getNodeIp(nodeName)
-	if err != nil || addr == "" {
-		addr = "http://localhost"
-	}
-	log.Println("NodeIp: ", addr)
-	accessAddr := ""
+	accessAddr := fmt.Sprintf("%s.%s", svc.Name, stormNs)
 	for _, p := range ports {
-		if opt.IsLocal {
-			if nodePort := p.NodePort; nodePort != 0 {
-				accessAddr = fmt.Sprintf("%s:%d", addr, nodePort)
-			}
+		if targetPort := p.TargetPort.IntVal; targetPort != 0 {
+			addr := fmt.Sprintf("%s:%d", accessAddr, targetPort)
+			accessAddr = addr
 		}
 	}
 	return &types.DeploymentResult{Address: accessAddr}, nil
@@ -198,7 +185,7 @@ func (d *defaultK8sService) createService(serviceName string, serviceType v1.Ser
 	svc.Name = name
 	svc.Labels = labels
 	svc.Namespace = stormNs
-	servicePort := findAvailablePort()
+	servicePort := findPort()
 	port := v1.ServicePort{
 		Name:       truncString(fmt.Sprintf("%15s", name+"-serviceport")),
 		Protocol:   "TCP",
@@ -396,6 +383,21 @@ func findAvailablePort() int {
 	if err := conn.Close(); err != nil { /*no-op*/
 	}
 	return findAvailablePort()
+}
+
+func findPort() int {
+	port := rand.Intn(validPortRange)
+	if port < 1025 {
+		return findPort()
+	}
+	addr := fmt.Sprintf("localhost:%d", port)
+	conn, err := net.DialTimeout("tcp", addr, 5*time.Second)
+	if err != nil {
+		return port
+	}
+	if err := conn.Close(); err != nil { /*no-op*/
+	}
+	return findPort()
 }
 
 func Int32(i int32) *int32 {
