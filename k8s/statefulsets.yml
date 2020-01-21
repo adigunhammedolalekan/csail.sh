@@ -104,6 +104,25 @@ spec:
                 name: object-store-config
           args:
             - server
+            - /data
+          # Liveness probe detects situations where MinIO server instance
+          # is not working properly and needs restart. Kubernetes automatically
+          # restarts the pods if liveness checks fail.
+          livenessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: 9000
+            initialDelaySeconds: 120
+            periodSeconds: 20
+          # Readiness probe detects situations where MinIO server instance
+          # is not ready to accept connections. Kubernetes automatically
+          # stops all the traffic to the pods if readiness checks fail.
+          readinessProbe:
+            httpGet:
+              path: /minio/health/ready
+              port: 9000
+            initialDelaySeconds: 120
+            periodSeconds: 20
   volumeClaimTemplates:
     - metadata:
         name: object-store-volume
