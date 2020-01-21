@@ -5,7 +5,7 @@ metadata:
   labels:
     app: main-app
 spec:
-  replicas: 3
+  replicas: 2
   selector:
     matchLabels:
       app: app-service
@@ -27,9 +27,21 @@ spec:
               value: yourMinioSecret
             - name: MINIO_HOST
               value: storage-service:9000
+            - name: DOCKER_HOST
+              value: tcp://localhost:2375
           imagePullPolicy: Always
+        - name: docker-local
+          image: docker:18.05-dind
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: dind-storage
+              mountPath: /var/lib/docker
       imagePullSecrets:
         - name: hostgo-secret
+      volumes:
+        - name: dind-storage
+          emptyDir: {}
     metadata:
       labels:
         app: app-service
