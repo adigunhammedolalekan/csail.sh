@@ -10,3 +10,9 @@ spec:
           - backend:
               serviceName: proxy-service
               servicePort: 9093
+    - host: "api.hostgoapp.com"
+      http:
+        paths:
+          - backend:
+              serviceName: app-service
+              servicePort: 4005
