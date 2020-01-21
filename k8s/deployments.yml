@@ -5,7 +5,7 @@ metadata:
   labels:
     app: main-app
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: app-service
@@ -29,6 +29,8 @@ spec:
               value: storage-service:9000
             - name: DOCKER_HOST
               value: tcp://localhost:2375
+            - name: JWT_SECRET
+              value: jwt$ecre7
           imagePullPolicy: Always
         - name: docker-container
           image: docker:18.05-dind
