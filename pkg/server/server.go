@@ -15,6 +15,7 @@ import (
 	"github.com/saas/hostgolang/pkg/session"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+	"log"
 	"os"
 	"path/filepath"
 	"time"
@@ -131,7 +132,8 @@ func createK8sClient() (*kubernetes.Clientset, error) {
 }
 
 func createDockerService(cfg *config.Config) (services.DockerService, error) {
-	docker, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	log.Println("creating docker service...")
+	docker, err := client.NewClientWithOpts(client.FromEnv, client.WithVersion("1.37"), client.WithAPIVersionNegotiation())
 	if err != nil {
 		return nil, err
 	}
