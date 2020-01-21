@@ -85,8 +85,8 @@ func (d *defaultK8sService) DeployService(opt *types.CreateDeploymentOpts) (*typ
 
 	accessAddr := fmt.Sprintf("%s.%s", svc.Name, stormNs)
 	for _, p := range ports {
-		if targetPort := p.TargetPort.IntVal; targetPort != 0 {
-			addr := fmt.Sprintf("%s:%d", accessAddr, targetPort)
+		if targetPort := p.Port; targetPort != 0 {
+			addr := fmt.Sprintf("http://%s:%d", accessAddr, targetPort)
 			accessAddr = addr
 		}
 	}

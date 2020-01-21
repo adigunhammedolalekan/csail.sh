@@ -90,6 +90,7 @@ func (d *defaultDeploymentRepository) CreateDeployment(app *types.App, reader io
 	}
 
 	result, err := d.k8s.DeployService(opt)
+	log.Println(result)
 	if err != nil {
 		log.Println("failed to deploy service: ", err)
 		return nil, ErrDeploymentFailed
