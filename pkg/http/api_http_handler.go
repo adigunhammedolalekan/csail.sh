@@ -100,3 +100,7 @@ func (handler *ApiHandler) GetAccountApps(ctx *gin.Context) {
 		InternalServerErrorResponse(ctx, "failed to retrieve app list at this time. Please retry later")
 	}
 }
+
+func (handler *ApiHandler) StatusHandler(ctx *gin.Context) {
+	ctx.JSON(http.StatusOK, &SuccessResponse{Error: false, Message: "echo: Fucking all is well!"})
+}

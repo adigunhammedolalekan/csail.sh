@@ -102,6 +102,8 @@ func NewServer(addr string) (*Server, error) {
 	apiRouter.PUT("/apps/rollback/:appName", deploymentHandler.RollbackDeploymentHandler)
 	apiRouter.POST("/apps/resource/new/:appName", resourcesDeploymentHandler.CreateResourceHandler)
 	apiRouter.DELETE("/apps/resource/remove/:appName", resourcesDeploymentHandler.DeleteResourceHandler)
+	apiRouter.GET("/status", apiHandler.StatusHandler)
+
 
 	router.Static("/css", "./frontend/css")
 	router.Static("/f2/css", "./frontend/f2/css")
@@ -142,6 +144,11 @@ func createDockerService(cfg *config.Config) (services.DockerService, error) {
 
 func (s *Server) Run() error {
 	s.router.LoadHTMLGlob("frontend/*.html")
+	log.Println("Server is running...")
+	log.Println("Server is running...")
+	log.Println("Server is running...")
+	log.Println("Server is running...")
+
 	if err := s.router.Run(s.addr); err != nil {
 		return err
 	}
