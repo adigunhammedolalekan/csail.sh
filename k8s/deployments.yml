@@ -3,9 +3,9 @@ kind: Deployment
 metadata:
   name: hostgo-app
   labels:
-    app: app-service
+    app: main-app
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: app-service
@@ -17,10 +17,16 @@ spec:
           ports:
             - containerPort: 4005
               protocol: TCP
-              name: acc-port
+              name: access-port
           env:
             - name: K8S_CONFIG_DIR
               value: /var/kube/config
+            - name: MINIO_ACCESS_KEY
+              value: yourMinioKey
+            - name: MINIO_SECRET_KEY
+              value: yourMinioSecret
+            - name: MINIO_HOST
+              value: storage-service:9000
           imagePullPolicy: Always
       imagePullSecrets:
         - name: hostgo-secret
