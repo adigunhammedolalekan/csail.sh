@@ -47,10 +47,10 @@ spec:
           ports:
             - containerPort: 9093
               protocol: TCP
-              name: proxy-tcp-port
+              name: proxy-port
             - containerPort: 80
               protocol: TCP
-              name: http-port
+              name: access-http-port
             - containerPort: 443
               protocol: TCP
               name: https-port
