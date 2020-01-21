@@ -1,13 +1,13 @@
 apiVersion: certmanager.k8s.io/v1alpha1
 kind: Issuer
 metadata:
-  name: letsencrypt-staging
+  name: letsencrypt-prod
 spec:
   acme:
-    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    server: https://acme-v02.api.letsencrypt.org/directory
     email: adigunhammed.lekan@gmail.com
     privateKeySecretRef:
-      name: letsencrypt-staging
+      name: letsencrypt-prod
     solvers:
       - dns01:
           cnameStrategy: Follow
@@ -20,11 +20,11 @@ spec:
 apiVersion: certmanager.k8s.io/v1alpha1
 kind: Certificate
 metadata:
-  name: hostgo-certificate
+  name: hostgo-prod-certs
 spec:
-  secretName: hostgo-certificates
+  secretName: hostgo-prod-certs
   issuerRef:
-    name: letsencrypt-staging
+    name: letsencrypt-prod
   commonName: hostgoapp.com
   dnsNames:
     - hostgoapp.com
