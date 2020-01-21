@@ -201,11 +201,11 @@ func (d *defaultK8sService) createService(serviceName string, serviceType v1.Ser
 }
 
 func (d *defaultK8sService) createDeployment(tag, name string, envs, labels map[string]string, ports []v1.ServicePort, replicas int32, mem, vCpu float64) error {
-	cpu, err := resource.ParseQuantity(fmt.Sprintf("%fm", vCpu*1000))
+	cpu, err := resource.ParseQuantity(fmt.Sprintf("%fm", vCpu * 1000))
 	if err != nil {
 		return err
 	}
-	memory, err := resource.ParseQuantity(fmt.Sprintf("%fMi", mem*1000))
+	memory, err := resource.ParseQuantity(fmt.Sprintf("%fMi", mem * 1000))
 	if err != nil {
 		return err
 	}
@@ -213,7 +213,6 @@ func (d *defaultK8sService) createDeployment(tag, name string, envs, labels map[
 	deployment := &appsV1.Deployment{}
 	deployment.Name = name
 	deployment.Labels = labels
-
 	container := v1.Container{}
 	envVars := make([]v1.EnvVar, 0, len(envs))
 
@@ -294,7 +293,6 @@ func (d *defaultK8sService) createRegistrySecret() error {
 	if _, err := c.Create(secret); err != nil {
 		return err
 	}
-	log.Println("secret created")
 	return nil
 }
 

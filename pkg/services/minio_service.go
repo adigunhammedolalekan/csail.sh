@@ -77,7 +77,7 @@ func (m *minioStorageClient) GetReleaseConfig(key string) (*types.ReleaseConfig,
 	}
 	cfg := &types.ReleaseConfig{}
 	if err := json.NewDecoder(data).Decode(cfg); err != nil {
-		return nil, ErrEncodeDecode
+		return nil, ErrDataNotFound
 	}
 	return cfg, nil
 }
