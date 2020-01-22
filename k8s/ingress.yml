@@ -6,15 +6,17 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-body-size: "1000m"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "60000"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "60000"
-    certmanager.k8s.io/clusterissuer: letsencrypt-prod
+    certmanager.k8s.io/clusterissuer: "letsencrypt-staging"
+    kubernetes.io/ingress.class: "nginx"
 spec:
   tls:
     - hosts:
-        - hostgoapp.com
-        - "*.hostgoapp.com"
+        - api.hostgoapp.com
+        - test.hostgoapp.com
+        #- "*.hostgoapp.com"
       secretName: hostgo-domain-secret
   rules:
-    - host: "*.hostgoapp.com"
+    - host: "test.hostgoapp.com"
       http:
         paths:
           - backend:
