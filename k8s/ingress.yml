@@ -12,11 +12,10 @@ spec:
   tls:
     - hosts:
         - api.hostgoapp.com
-        - test.hostgoapp.com
-        #- "*.hostgoapp.com"
+        - "*.hostgoapp.com"
       secretName: hostgo-domain-secret
   rules:
-    - host: "test.hostgoapp.com"
+    - host: "*.hostgoapp.com"
       http:
         paths:
           - backend:
