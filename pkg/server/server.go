@@ -101,6 +101,7 @@ func NewServer(addr string) (*Server, error) {
 	apiRouter.PUT("/apps/rollback/:appName", deploymentHandler.RollbackDeploymentHandler)
 	apiRouter.POST("/apps/resource/new/:appName", resourcesDeploymentHandler.CreateResourceHandler)
 	apiRouter.DELETE("/apps/resource/remove/:appName", resourcesDeploymentHandler.DeleteResourceHandler)
+	apiRouter.POST("/apps/use", apiHandler.UseAppHandler)
 	apiRouter.GET("/status", apiHandler.StatusHandler)
 
 

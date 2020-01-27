@@ -48,8 +48,8 @@ type DeploymentSettings struct {
 	gorm.Model
 	AppId    uint `json:"app_id"`
 	Replicas uint `json:"replicas"`
-	CPUs     uint `json:"cpus"`
-	Memory   uint `json:"memory"`
+	PlanId uint `json:"plan_id"`
+	Plan *Plan `json:"plan" gorm:"-" sql:"-"`
 }
 
 func NewDeploymentSettings(appId, replicas uint) *DeploymentSettings {

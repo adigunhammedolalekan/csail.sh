@@ -13,7 +13,7 @@ spec:
     - hosts:
         - api.hostgoapp.com
         - "*.hostgoapp.com"
-      secretName: hostgo-domain-secret
+      secretName: hostgo-dev-secret
   rules:
     - host: "*.hostgoapp.com"
       http:

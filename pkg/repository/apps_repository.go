@@ -16,7 +16,7 @@ var ErrAppDataRetrieveFailed = errors.New("failed to retrieve app data. Please r
 
 //go:generate mockgen -destination=mocks/apps_repository_mock.go -package=mocks github.com/saas/hostgolang/pkg/repository AppsRepository
 type AppsRepository interface {
-	CreateApp(name string, accountId uint) (*types.App, error)
+	CreateApp(name, plan string, accountId uint) (*types.App, error)
 	GetApp(name string) (*types.App, error)
 	GetAppById(appId uint) (*types.App, error)
 	GetAccountApps(accountId uint) ([]types.App, error)
@@ -25,6 +25,8 @@ type AppsRepository interface {
 	DeleteEnvironmentVars(appName string, keys []string) error
 	ScaleApp(appName string, replicas int) error
 	ListRunningInstances(appName string) ([]types.Instance, error)
+	GetPlan(appId uint) (*types.Plan, error)
+	UpdatePlan(appId uint, planAlias string) error
 }
 
 type appsRepository struct {
@@ -42,7 +44,7 @@ func (a *appsRepository) GetAccountApps(accountId uint) ([]types.App, error) {
 	return data, nil
 }
 
-func (a *appsRepository) CreateApp(name string, accountId uint) (*types.App, error) {
+func (a *appsRepository) CreateApp(name, plan string, accountId uint) (*types.App, error) {
 	if name == "" {
 		name = a.nameGen.Generate()
 	}
@@ -50,8 +52,19 @@ func (a *appsRepository) CreateApp(name string, accountId uint) (*types.App, err
 	if err == nil && len(ap.AppName) > 0 {
 		return nil, ErrDuplicateName
 	}
+	tx := a.db.Begin()
+	if err := tx.Error; err != nil {
+		return nil, err
+	}
 	app := types.NewApp(name, accountId)
-	if err := a.db.Create(app).Error; err != nil {
+	if err := tx.Create(app).Error; err != nil {
+		return nil, ErrFailedCreateApp
+	}
+	appPlan := types.NewPlan(app.ID, plan)
+	if err := tx.Create(appPlan).Error; err != nil {
+		return nil, ErrFailedCreateApp
+	}
+	if err := tx.Commit().Error; err != nil {
 		return nil, ErrFailedCreateApp
 	}
 	return app, nil
@@ -163,6 +176,24 @@ func (a *appsRepository) ScaleApp(appName string, replicas int) error {
 
 func (a *appsRepository) ListRunningInstances(appName string) ([]types.Instance, error) {
 	return a.ks8.ListRunningPods(appName)
+}
+
+func (a *appsRepository) GetPlan(appId uint) (*types.Plan, error) {
+	p := &types.Plan{}
+	err := a.db.Table("plans").Where("app_id = ?", appId).First(p).Error
+	if err != nil {
+		return &types.DefaultPlan, nil
+	}
+	return p, nil
+}
+
+func (a *appsRepository) UpdatePlan(appId uint, planAlias string) error {
+	app, err := a.GetAppById(appId)
+	if err != nil {
+		return err
+	}
+	_ = app
+	return errors.New("not yet implemented")
 }
 
 func NewAppsRepository(db *gorm.DB, nameGenerator namegenerator.Generator, k8s services.K8sService) AppsRepository {

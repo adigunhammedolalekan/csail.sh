@@ -3,6 +3,13 @@
   <component name="ChangeListManager">
     <list default="true" id="d33e0391-4457-4e31-88c7-44ad1bcaa58c" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/http/api_http_handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/http/api_http_handler.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/repository/apps_repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/repository/apps_repository.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/repository/deployment_repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/repository/deployment_repository.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/server/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/server/server.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/services/resources_k8s_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/services/resources_k8s_service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/types/apps.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/types/apps.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/types/billing.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/types/billing.go" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />

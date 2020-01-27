@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/retry"
-	"log"
 	"strings"
 )
 
@@ -105,7 +104,6 @@ func (d *defaultResourcesService) createResourceService(serviceName string, targ
 	}
 	s, err := svcClient.Services(stormNs).Create(svc)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 	return s, nil
@@ -167,7 +165,7 @@ func (d *defaultResourcesService) createResourceStatefulSet(appName string, svc 
 		},
 	}
 	container.Ports = []v1.ContainerPort{{
-		Name:          truncString(fmt.Sprintf("%15s", name+"-port")),
+		Name:          truncString(fmt.Sprintf("%15s", name+"port")),
 		ContainerPort: int32(res.Port()),
 		Protocol:      "TCP",
 	}}

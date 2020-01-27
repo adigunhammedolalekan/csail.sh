@@ -66,11 +66,13 @@ func (handler *ApiHandler) CreateAppHandler(ctx *gin.Context) {
 	}
 	var request struct {
 		Name string `json:"name"`
+		Plan string `json:"plan"`
 	}
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		request.Name = ctx.Query("name")
+		request.Plan = ctx.Query("plan")
 	}
-	app, err := handler.appRepo.CreateApp(request.Name, account.ID)
+	app, err := handler.appRepo.CreateApp(request.Name, request.Plan, account.ID)
 	if err != nil {
 		InternalServerErrorResponse(ctx, err.Error())
 		return
@@ -99,6 +101,32 @@ func (handler *ApiHandler) GetAccountApps(ctx *gin.Context) {
 	default:
 		InternalServerErrorResponse(ctx, "failed to retrieve app list at this time. Please retry later")
 	}
+}
+
+func (handler *ApiHandler) UseAppHandler(ctx *gin.Context) {
+	token := ctx.GetHeader(tokenHeaderName)
+	if token == "" {
+		ForbiddenRequestResponse(ctx, "authentication token is missing from request")
+		return
+	}
+	account, err := handler.store.Get(token)
+	if err != nil {
+		ForbiddenRequestResponse(ctx, "failed to retrieve authentication data. Please re-authenticate")
+		return
+	}
+	app, err := handler.appRepo.GetApp(ctx.Query("name"))
+	if err != nil {
+		BadRequestResponse(ctx, err.Error())
+		return
+	}
+	if app.AccountId != account.ID {
+		ForbiddenRequestResponse(ctx, "forbidden")
+		return
+	}
+	type response struct {
+		AppName string `json:"name"`
+	}
+	ctx.JSON(http.StatusOK, &SuccessResponse{Error: false, Message: "success", Data: &response{AppName: app.AppName}})
 }
 
 func (handler *ApiHandler) StatusHandler(ctx *gin.Context) {

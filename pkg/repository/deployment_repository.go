@@ -85,12 +85,11 @@ func (d *defaultDeploymentRepository) CreateDeployment(app *types.App, reader io
 		Replicas: int32(replicas),
 		Tag:      dockerUrl,
 		IsLocal:  true,
-		Memory:   0.1,
-		Cpu:      0.1,
+		Memory:   settings.Plan.Info.Memory,
+		Cpu:      settings.Plan.Info.Cpu,
 	}
 
 	result, err := d.k8s.DeployService(opt)
-	log.Println(result)
 	if err != nil {
 		log.Println("failed to deploy service: ", err)
 		return nil, ErrDeploymentFailed
@@ -123,10 +122,11 @@ func (d *defaultDeploymentRepository) GetApplicationLogs(appName string) (string
 func (d *defaultDeploymentRepository) CheckRelease(appId uint, r io.Reader) (string, error) {
 	checkSum := d.calculateCheckSum(r)
 	release, err := d.GetRelease(appId)
-	if err == nil {
-		if release.LastCheckSum == checkSum {
-			return checkSum, ErrNoChangeToDeploy
-		}
+	if err != nil || release.LastCheckSum == "" {
+		return checkSum, nil
+	}
+	if release.LastCheckSum == checkSum {
+		return checkSum, ErrNoChangeToDeploy
 	}
 	return checkSum, nil
 }
@@ -156,24 +156,27 @@ func (d *defaultDeploymentRepository) updateRelease(r *types.Release) error {
 
 func (d *defaultDeploymentRepository) CreateRelease(appId uint, checkSum string, data []byte) error {
 	release, err := d.GetRelease(appId)
-	if err == nil && release.LastCheckSum != "" {
-		release.LastCheckSum = checkSum
-		if err := d.updateRelease(release); err == nil {
-			app, _ := d.appRepo.GetAppById(appId)
-			envs, _ := d.appRepo.GetEnvironmentVars(app.AppName)
-			cfg := &types.ReleaseConfig{Envs: envs, Version: fmt.Sprintf("%s:v%d", app.AppName, release.VersionNumber)}
-			go func(storage services.StorageClient, reader []byte, r *types.ReleaseConfig) {
-				if err := storage.Put(r.Version, reader); err != nil {
-					log.Println("failed to store app release: ", err)
-				}
-				if err := storage.PutReleaseConfig(r.Version, r); err != nil {
-					log.Println("failed to store app release configuration: ", err)
-				}
-			}(d.storage, data, cfg)
-		}
+	if err != nil || release.LastCheckSum == "" {
+		// first time. create a new release
+		rls := types.NewRelease(appId, checkSum, 1)
+		return d.db.Create(rls).Error
 	}
-	release = types.NewRelease(appId, checkSum, 1)
-	return d.db.Create(release).Error
+	release.LastCheckSum = checkSum
+	if err := d.updateRelease(release); err != nil {
+		return err
+	}
+	app, _ := d.appRepo.GetAppById(appId)
+	envs, _ := d.appRepo.GetEnvironmentVars(app.AppName)
+	cfg := &types.ReleaseConfig{Envs: envs, Version: fmt.Sprintf("%s:v%d", app.AppName, release.VersionNumber)}
+	go func(storage services.StorageClient, reader []byte, r *types.ReleaseConfig) {
+		if err := storage.Put(r.Version, reader); err != nil {
+			log.Println("failed to store app release: ", err)
+		}
+		if err := storage.PutReleaseConfig(r.Version, r); err != nil {
+			log.Println("failed to store app release configuration: ", err)
+		}
+	}(d.storage, data, cfg)
+	return nil
 }
 
 func (d *defaultDeploymentRepository) CreateOrUpdateDeploymentSettings(appId, replicas uint) error {
@@ -188,8 +191,10 @@ func (d *defaultDeploymentRepository) GetDeploymentSettings(appId uint) (*types.
 	settings := &types.DeploymentSettings{}
 	err := d.db.Table("deployment_settings").Where("app_id = ?", appId).First(settings).Error
 	if err != nil {
-		return nil, ErrNotFound
+		return settings, ErrNotFound
 	}
+	p, _ := d.appRepo.GetPlan(appId)
+	settings.Plan = p
 	return settings, nil
 }
 
@@ -198,7 +203,7 @@ func (d *defaultDeploymentRepository) RollbackDeployment(appId uint, version str
 	if err != nil {
 		return nil, err
 	}
-	if fmt.Sprintf("v%d", currentRelease.ID) == version {
+	if fmt.Sprintf("v%d", currentRelease.VersionNumber) == version {
 		return nil, errors.New("cannot rollback to current release")
 	}
 
@@ -245,8 +250,8 @@ func (d *defaultDeploymentRepository) RollbackDeployment(appId uint, version str
 		Replicas: int32(replicas),
 		Tag:      dockerUrl,
 		IsLocal:  true,
-		Memory:   0.1,
-		Cpu:      0.1,
+		Memory:   settings.Plan.Info.Memory,
+		Cpu:      settings.Plan.Info.Cpu,
 	}
 
 	result, err := d.k8s.DeployService(opt)
