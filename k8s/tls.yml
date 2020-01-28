@@ -22,9 +22,9 @@ apiVersion: certmanager.k8s.io/v1alpha1
 kind: Certificate
 metadata:
   name: hostgo-staging-certs
-  namespace: default
+  namespace: cert-manager
 spec:
-  secretName: hostgo-dev-secret
+  secretName: hostgo-cert-secret
   issuerRef:
     name: staging-issuer
     kind: ClusterIssuer
