@@ -1,0 +1,34 @@
+apiVersion: cert-manager.io/v1alpha2
+kind: ClusterIssuer
+metadata:
+  name: prod-issuer
+  namespace: cert-manager
+spec:
+  acme:
+    # server: https://acme-staging-v02.api.letsencrypt.org/directory
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: adigunhammed.lekan@gmail.com
+    privateKeySecretRef:
+      name: prod-certs-key
+    solvers:
+      - dns01:
+          digitalocean:
+            tokenSecretRef:
+              name: do-secret-data
+              key: access-token
+---
+
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: hostgo-staging-certs
+  namespace: cert-manager
+spec:
+  secretName: hostgo-prod-certs
+  issuerRef:
+    name: prod-issuer
+    kind: ClusterIssuer
+  commonName: hostgoapp.com
+  dnsNames:
+    - hostgoapp.com
+    - '*.hostgoapp.com'
