@@ -27,6 +27,7 @@ spec:
   secretName: hostgo-dev-secret
   issuerRef:
     name: issuer-dev
+    kind: ClusterIssuer
   commonName: hostgoapp.com
   dnsNames:
     - hostgoapp.com
