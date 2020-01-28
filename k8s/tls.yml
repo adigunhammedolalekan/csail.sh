@@ -10,13 +10,12 @@ spec:
     privateKeySecretRef:
       name: staging-private-key
     solvers:
-      - dns01:
-          cnameStrategy: Follow
+      - selector: {}
+        dns01:
           digitalocean:
             tokenSecretRef:
               name: do-secret-data
               key: access-token
-
 ---
 apiVersion: certmanager.k8s.io/v1alpha1
 kind: Certificate
