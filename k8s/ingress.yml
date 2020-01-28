@@ -2,7 +2,6 @@ apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: proxy-ingress
-  namespace: cert-manager
   annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: "1000m"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "60000"
@@ -14,7 +13,7 @@ spec:
     - hosts:
         - api.hostgoapp.com
         - "*.hostgoapp.com"
-      secretName: hostgo-cert-secret
+      secretName: hostgo-certs-sec
   rules:
     - host: "*.hostgoapp.com"
       http:

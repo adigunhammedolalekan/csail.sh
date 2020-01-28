@@ -5,17 +5,17 @@ metadata:
   namespace: cert-manager
 spec:
   acme:
+    # server: https://acme-staging-v02.api.letsencrypt.org/directory
     server: https://acme-staging-v02.api.letsencrypt.org/directory
     email: adigunhammed.lekan@gmail.com
     privateKeySecretRef:
-      name: staging-private-key
+      name: staging-certs-key
     solvers:
       - dns01:
           digitalocean:
             tokenSecretRef:
               name: do-secret-data
               key: access-token
-        selector: {}
 ---
 
 apiVersion: cert-manager.io/v1alpha2
@@ -24,7 +24,7 @@ metadata:
   name: hostgo-staging-certs
   namespace: cert-manager
 spec:
-  secretName: hostgo-cert-secret
+  secretName: hostgo-certs-sec
   issuerRef:
     name: staging-issuer
     kind: ClusterIssuer
