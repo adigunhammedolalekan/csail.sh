@@ -98,7 +98,6 @@ spec:
       targetPort: 9093
   selector:
     app: proxy-service
-
 ---
 kind: Service
 apiVersion: v1
