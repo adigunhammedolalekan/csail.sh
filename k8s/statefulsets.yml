@@ -169,43 +169,40 @@ spec:
           requests:
             storage: 2Gi
 ---
-
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: git-server-st
+  name: git-srv-ss
 spec:
-  serviceName: "git-service"
-  replicas: 1
   selector:
     matchLabels:
       app: git-service
+  serviceName: "git-service"
   template:
     metadata:
       labels:
         app: git-service
     spec:
       containers:
-        - name: git-srv-container
+        - name: git-srv-cont
           image: registry.hostgolang.com/gitserver:latest
           env:
-            - name: MASTER_PASSWORD
-              value: $MASTER_PASSWORD$
+            - name: MASTER_PWD
+              value: $MASTER_PASSWORD
           ports:
             - containerPort: 4007
               name: tcp-port
-            - containerPort: 4008
-              name: git-port
           volumeMounts:
-            - name: git-srv-volume
-              mountPath: /var/storage/git
-              subPath: git
+            - mountPath: /var/ss/gitv
+              name: git-volume
+              subPath: gitv
   volumeClaimTemplates:
     - metadata:
-        name: git-srv-volume
+        name: git-srv-vol
       spec:
-        accessModes: [ "ReadWriteOnce" ]
+        accessModes:
+          - "ReadWriteOnce"
         storageClassName: do-block-storage
         resources:
           requests:
-            storage: 3Gi
+            storage: 4Gi
