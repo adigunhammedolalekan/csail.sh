@@ -26,3 +26,9 @@ spec:
           - backend:
               serviceName: app-service
               servicePort: 4005
+    - host: "git.hostgoapp.com"
+      http:
+        paths:
+          - backend:
+              serviceName: git-service
+              servicePort: 4007

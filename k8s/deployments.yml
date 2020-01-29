@@ -31,6 +31,8 @@ spec:
               value: tcp://localhost:2375
             - name: JWT_SECRET
               value: jwt$ecre7
+            - name: GIT_MASTER_PASSWORD
+              value: $MASTER_PASSWORD$
           imagePullPolicy: Always
         - name: docker-container
           image: docker:18.05-dind

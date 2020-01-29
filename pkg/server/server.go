@@ -48,6 +48,7 @@ func NewServer(addr string) (*Server, error) {
 			Username: "lekan",
 			Password: "manman",
 		},
+		GitServerUrl: "http://git-service:4008",
 	}
 	proxyClient, err := proxy.NewProxyClient(cfg)
 	if err != nil {

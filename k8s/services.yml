@@ -126,3 +126,23 @@ spec:
       port: 443
       protocol: TCP
       targetPort: https
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: git-service
+  labels:
+    app: git-service
+spec:
+  type: ClusterIP
+  ports:
+    - name: http-port
+      port: 4007
+      protocol: TCP
+      targetPort: 4007
+    - name: git-port
+      port: 4008
+      protocol: TCP
+      targetPort: 4008
+  selector:
+    app: git-service

@@ -3,6 +3,7 @@ package config
 type Config struct {
 	ProxyServerAddress string         `json:"proxy_server_address"`
 	Registry           RegistryConfig `json:"registry"`
+	GitServerUrl string `json:"git_server_url"`
 }
 
 type RegistryConfig struct {
