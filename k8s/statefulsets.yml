@@ -172,7 +172,7 @@ spec:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: git-srv-ss
+  name: git-serv-ss
 spec:
   selector:
     matchLabels:
@@ -185,7 +185,7 @@ spec:
     spec:
       containers:
         - name: git-srv-cont
-          image: postgres:latest
+          image: registry.hostgolang.com/gitserver:latest
           env:
             - name: MASTER_PWD
               value: $MASTER_PASSWORD
@@ -193,15 +193,14 @@ spec:
             - containerPort: 4007
               name: tcp-port
           volumeMounts:
-            - mountPath: /var/ss/gitv
-              name: git-srv-vol
-              subPath: gitv
+            - name: git-serv-vol
+              mountPath: /mnt/storage/git
+              subPath: git
   volumeClaimTemplates:
     - metadata:
-        name: git-srv-vol
+        name: git-serv-vol
       spec:
-        accessModes:
-          - "ReadWriteOnce"
+        accessModes: [ "ReadWriteOnce" ]
         storageClassName: do-block-storage
         resources:
           requests:
