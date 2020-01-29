@@ -194,7 +194,7 @@ spec:
               name: tcp-port
           volumeMounts:
             - mountPath: /var/ss/gitv
-              name: git-volume
+              name: git-srv-vol
               subPath: gitv
   volumeClaimTemplates:
     - metadata:
