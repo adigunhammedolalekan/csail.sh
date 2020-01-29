@@ -172,7 +172,7 @@ spec:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: git-serv-ss
+  name: git-server-ss
 spec:
   selector:
     matchLabels:
@@ -184,7 +184,7 @@ spec:
         app: git-service
     spec:
       containers:
-        - name: git-srv-cont
+        - name: git-server-cont
           image: registry.hostgolang.com/gitserver:latest
           env:
             - name: MASTER_PWD
@@ -193,52 +193,15 @@ spec:
             - containerPort: 4007
               name: tcp-port
           volumeMounts:
-            - name: git-serv-vol
+            - name: git-server-vol
               mountPath: /mnt/storage/git
               subPath: git
   volumeClaimTemplates:
     - metadata:
-        name: git-serv-vol
+        name: git-server-vol
       spec:
         accessModes: [ "ReadWriteOnce" ]
         storageClassName: do-block-storage
         resources:
           requests:
             storage: 4Gi
-
----
-
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: redis-session-store1
-spec:
-  serviceName: "redis-service"
-  replicas: 1
-  selector:
-    matchLabels:
-      app: redis-service
-  template:
-    metadata:
-      labels:
-        app: redis-service
-    spec:
-      containers:
-        - name: redis-session-store1
-          image: redis:latest
-          ports:
-            - containerPort: 6379
-              name: tcp-port
-          volumeMounts:
-            - name: redis-volume1
-              mountPath: /var/sessions/redis/data
-              subPath: redis
-  volumeClaimTemplates:
-    - metadata:
-        name: redis-volume1
-      spec:
-        accessModes: [ "ReadWriteOnce" ]
-        storageClassName: do-block-storage
-        resources:
-          requests:
-            storage: 2Gi
