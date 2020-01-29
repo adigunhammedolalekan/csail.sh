@@ -185,7 +185,7 @@ spec:
     spec:
       containers:
         - name: git-srv-cont
-          image: registry.hostgolang.com/gitserver:latest
+          image: postgres:latest
           env:
             - name: MASTER_PWD
               value: $MASTER_PASSWORD
