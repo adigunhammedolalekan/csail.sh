@@ -194,7 +194,7 @@ spec:
               name: git-port
           volumeMounts:
             - name: git-server-volume
-              mountPath: /var/storage
+              mountPath: /var/storage/git
               subPath: git
           env:
             - name: MASTER_PASSWORD
