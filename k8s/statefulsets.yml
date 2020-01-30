@@ -196,6 +196,9 @@ spec:
             - name: git-server-vol
               mountPath: /mnt/storage/git
               subPath: git
+          imagePullPolicy: Always
+      imagePullSecrets:
+        - name: hostgo-secret
   volumeClaimTemplates:
     - metadata:
         name: git-server-vol
