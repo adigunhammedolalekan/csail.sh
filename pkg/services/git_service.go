@@ -24,7 +24,8 @@ func NewGitService(cfg *config.Config) GitService {
 	httpClient := &http.Client{Timeout: 60 * time.Second}
 	tcp := NewTcpServer()
 	go func() {
-		if err := tcp.Run(fmt.Sprintf(":%d", cfg.GitTcpPort)); err != nil {
+		log.Println("git TCP notification server started at ", cfg.GitTcpAddr)
+		if err := tcp.Run(cfg.GitTcpAddr); err != nil {
 			log.Fatal("failed to start Git tcp server: ", err)
 		}
 	}()

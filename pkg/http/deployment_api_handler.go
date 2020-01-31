@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type DeploymentHandler struct {
@@ -65,7 +66,12 @@ func (handler *DeploymentHandler) CreateGitDeploymentHandler(ctx *gin.Context) {
 		BadRequestResponse(ctx, "hook data is missing")
 		return
 	}
-	app, err := handler.appRepo.GetApp(hookInfo.RepoName)
+	appName := hookInfo.RepoName
+	s := strings.Split(hookInfo.RepoName, ".")
+	if len(s) == 2 {
+		appName = s[0]
+	}
+	app, err := handler.appRepo.GetApp(appName)
 	if err != nil {
 		BadRequestResponse(ctx, "app not found")
 		return
