@@ -6,6 +6,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/saas/hostgolang/pkg/services"
 	"github.com/saas/hostgolang/pkg/types"
+	"log"
 )
 
 var ErrDuplicateName = errors.New("an app already exists with that name")
@@ -33,6 +34,7 @@ type appsRepository struct {
 	db      *gorm.DB
 	nameGen namegenerator.Generator
 	ks8     services.K8sService
+	gitService services.GitService
 }
 
 func (a *appsRepository) GetAccountApps(accountId uint) ([]types.App, error) {
@@ -62,6 +64,12 @@ func (a *appsRepository) CreateApp(name, plan string, accountId uint) (*types.Ap
 	}
 	appPlan := types.NewPlan(app.ID, plan)
 	if err := tx.Create(appPlan).Error; err != nil {
+		tx.Rollback()
+		return nil, ErrFailedCreateApp
+	}
+	if err := a.gitService.CreateRepository(name); err != nil {
+		log.Println("failed to create repository ", err)
+		tx.Rollback()
 		return nil, ErrFailedCreateApp
 	}
 	if err := tx.Commit().Error; err != nil {
@@ -196,6 +204,7 @@ func (a *appsRepository) UpdatePlan(appId uint, planAlias string) error {
 	return errors.New("not yet implemented")
 }
 
-func NewAppsRepository(db *gorm.DB, nameGenerator namegenerator.Generator, k8s services.K8sService) AppsRepository {
-	return &appsRepository{db: db, nameGen: nameGenerator, ks8: k8s}
+func NewAppsRepository(db *gorm.DB, nameGenerator namegenerator.Generator,
+	k8s services.K8sService, gitService services.GitService) AppsRepository {
+	return &appsRepository{db: db, nameGen: nameGenerator, ks8: k8s, gitService: gitService}
 }

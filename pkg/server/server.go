@@ -80,7 +80,7 @@ func NewServer(addr string) (*Server, error) {
 	resourseK8sClient := services.NewResourcesService(k8sClient)
 	sessionStore := session.NewRedisSessionStore(redisClient)
 	accountRepo := repository.NewAccountRepository(db, sessionStore)
-	appRepo := repository.NewAppsRepository(db, namegenerator.NewNameGenerator(time.Now().UnixNano()), k8sService)
+	appRepo := repository.NewAppsRepository(db, namegenerator.NewNameGenerator(time.Now().UnixNano()), k8sService, gitService)
 	deploymentRepo := repository.NewDeploymentRepository(db, dockerService, k8sService,
 		proxyClient, appRepo, storageClient, cfg, gitService)
 	resourceRepo := repository.NewResourcesDeploymentRepository(db, appRepo, accountRepo, resourseK8sClient)
