@@ -18,7 +18,7 @@ spec:
             - containerPort: 4005
               protocol: TCP
               name: access-port
-            - containerPort: 4010
+            - containerPort: 5005
               protocol: TCP
               name: git-access-p
           env:

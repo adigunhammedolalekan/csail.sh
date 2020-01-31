@@ -7,4 +7,5 @@ COPY k8s-config /var/kube/config
 ADD . /app
 WORKDIR /app
 RUN chmod +x /app/hostgolang
+EXPOSE 4005 5005
 ENTRYPOINT [ "/app/hostgolang" ]
