@@ -59,6 +59,25 @@ func (handler *DeploymentHandler) CreateDeploymentHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, &SuccessResponse{Error: false, Message: "deployment created", Data: r})
 }
 
+func (handler *DeploymentHandler) CreateGitDeploymentHandler(ctx *gin.Context) {
+	hookInfo := &types.HookInfo{}
+	if err := ctx.ShouldBindJSON(hookInfo); err != nil {
+		BadRequestResponse(ctx, "hook data is missing")
+		return
+	}
+	app, err := handler.appRepo.GetApp(hookInfo.RepoName)
+	if err != nil {
+		BadRequestResponse(ctx, "app not found")
+		return
+	}
+	r, err := handler.repo.CreateGitDeployment(app, hookInfo)
+	if err != nil {
+		InternalServerErrorResponse(ctx, "deployment failed: " + err.Error())
+		return
+	}
+	ctx.JSON(http.StatusOK, &SuccessResponse{Error: false, Message: "success", Data: r})
+}
+
 func (handler *DeploymentHandler) UpdateEnvironmentVars(ctx *gin.Context) {
 	account := handler.ensureAccount(ctx)
 	if account == nil {

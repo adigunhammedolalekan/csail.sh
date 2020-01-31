@@ -31,6 +31,7 @@ ENTRYPOINT [ "/app/%s" ]`
 //go:generate mockgen -destination=mocks/docker_service_mock.go -package=mocks github.com/saas/hostgolang/pkg/services DockerService
 type DockerService interface {
 	BuildImage(ctx context.Context, buildDir, name string, r io.Reader) (string, error)
+	BuildImageFromGitRepository(ctx context.Context, dir, name string) (string, error)
 	PushImage(ctx context.Context, tag string) error
 }
 
@@ -45,6 +46,27 @@ func NewDockerService(cli *client.Client, cfg *config.Config) DockerService {
 
 func (d *defaultDockerService) BuildImage(ctx context.Context, buildDir, name string, r io.Reader) (string, error) {
 	buildCtx, err := d.writeBuild(buildDir, name, r)
+	if err != nil {
+		return "", err
+	}
+	tag := d.md5()[:6]
+	pushUrl := fmt.Sprintf("%s/%s:%s", d.cfg.Registry.Url, strings.ToLower(name), tag)
+	rr, err := d.client.ImageBuild(ctx, buildCtx, types.ImageBuildOptions{
+		NoCache:    false,
+		Remove:     false,
+		Dockerfile: "Dockerfile",
+		Tags:       []string{pushUrl},
+	})
+	if err != nil {
+		return "", err
+	}
+	rsp, _ := ioutil.ReadAll(rr.Body)
+	fmt.Println(rr.OSType, string(rsp))
+	return pushUrl, nil
+}
+
+func (d *defaultDockerService) BuildImageFromGitRepository(ctx context.Context, dir, name string) (string, error) {
+	buildCtx, err := d.createBuildContext(dir)
 	if err != nil {
 		return "", err
 	}

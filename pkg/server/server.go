@@ -59,6 +59,7 @@ func NewServer(addr string) (*Server, error) {
 		return nil, err
 	}
 	k8sService := services.NewK8sService(k8sClient, cfg)
+	gitService := services.NewGitService(cfg)
 	dockerService, err := createDockerService(cfg)
 	if err != nil {
 		return nil, err
@@ -79,7 +80,8 @@ func NewServer(addr string) (*Server, error) {
 	sessionStore := session.NewRedisSessionStore(redisClient)
 	accountRepo := repository.NewAccountRepository(db, sessionStore)
 	appRepo := repository.NewAppsRepository(db, namegenerator.NewNameGenerator(time.Now().UnixNano()), k8sService)
-	deploymentRepo := repository.NewDeploymentRepository(db, dockerService, k8sService, proxyClient, appRepo, storageClient)
+	deploymentRepo := repository.NewDeploymentRepository(db, dockerService, k8sService,
+		proxyClient, appRepo, storageClient, cfg, gitService)
 	resourceRepo := repository.NewResourcesDeploymentRepository(db, appRepo, accountRepo, resourseK8sClient)
 
 	rd := http.NewHtmlRenderer()
@@ -93,6 +95,7 @@ func NewServer(addr string) (*Server, error) {
 	apiRouter.POST("/me/apps", apiHandler.CreateAppHandler)
 	apiRouter.GET("/me/apps", apiHandler.GetAccountApps)
 	apiRouter.POST("/apps/deploy", deploymentHandler.CreateDeploymentHandler)
+	apiRouter.POST("/apps/git/deploy", deploymentHandler.CreateGitDeploymentHandler)
 	apiRouter.GET("/apps/configs/:appName", deploymentHandler.GetEnvironmentVars)
 	apiRouter.GET("/apps/logs/:appName", deploymentHandler.GetApplicationLogsHandler)
 	apiRouter.POST("/apps/configs/:appName", deploymentHandler.UpdateEnvironmentVars)

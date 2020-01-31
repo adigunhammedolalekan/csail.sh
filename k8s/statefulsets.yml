@@ -192,6 +192,10 @@ spec:
           ports:
             - containerPort: 4007
               name: tcp-port
+            - containerPort: 4008
+              name: access-port
+            - containerPort: 4009
+              name: git-tcp-port
           volumeMounts:
             - name: git-server-vol
               mountPath: /mnt/storage/git
