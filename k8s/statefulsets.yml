@@ -198,10 +198,6 @@ spec:
               protocol: TCP
               hostPort: 4008
               name: access-port
-            - containerPort: 4009
-              protocol: TCP
-              hostPort: 4009
-              name: git-tcp-port
           volumeMounts:
             - name: git-server-vol
               mountPath: /mnt/storage/git

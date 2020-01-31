@@ -63,9 +63,9 @@ spec:
       protocol: TCP
       targetPort: 4005
     - name: git-tcp-port
-      port: 4009
+      port: 4010
       protocol: TCP
-      targetPort: 4009
+      targetPort: 4010
   selector:
     app: app-service
 
