@@ -18,9 +18,9 @@ spec:
             - containerPort: 4005
               protocol: TCP
               name: access-port
-            - containerPort: 5005
+            - containerPort: 4009
               protocol: TCP
-              name: git-access-p
+              name: git-access
           env:
             - name: K8S_CONFIG_DIR
               value: /var/kube/config
