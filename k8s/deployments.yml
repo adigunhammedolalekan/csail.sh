@@ -3,12 +3,12 @@ kind: Deployment
 metadata:
   name: hostgo-app
   labels:
-    app: main-app
+    web: app-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: app-service
+      web: app-service
   template:
     spec:
       containers:
@@ -55,7 +55,7 @@ spec:
           emptyDir: {}
     metadata:
       labels:
-        app: app-service
+        web: app-service
 ---
 apiVersion: apps/v1
 kind: Deployment

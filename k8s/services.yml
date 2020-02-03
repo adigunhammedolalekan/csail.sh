@@ -54,7 +54,7 @@ kind: Service
 metadata:
   name: app-service
   labels:
-    app: app-service
+    web: app-service
 spec:
   type: ClusterIP
   ports:
@@ -67,7 +67,7 @@ spec:
       protocol: TCP
       targetPort: 4009
   selector:
-    app: app-service
+    web: app-service
 
 ---
 apiVersion: v1
