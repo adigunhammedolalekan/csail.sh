@@ -1,12 +1,12 @@
 apiVersion: cert-manager.io/v1alpha2
 kind: ClusterIssuer
 metadata:
-  name: prod-cluster-isr
+  name: pd-cluster-isr
   namespace: cert-manager
 spec:
   acme:
-    # server: https://acme-staging-v02.api.letsencrypt.org/directory
-    server: https://acme-v02.api.letsencrypt.org/directory
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    #server: https://acme-v02.api.letsencrypt.org/directory
     email: adigunhammed.lekan@gmail.com
     privateKeySecretRef:
       name: prod-certs-key
@@ -24,9 +24,9 @@ metadata:
   name: prod-certs
   namespace: cert-manager
 spec:
-  secretName: prod-certs-secret
+  secretName: pd-certs-secret
   issuerRef:
-    name: prod-cluster-isr
+    name: pd-cluster-isr
     kind: ClusterIssuer
   commonName: hostgoapp.com
   dnsNames:
