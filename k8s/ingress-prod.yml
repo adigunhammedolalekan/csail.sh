@@ -32,3 +32,6 @@ spec:
           - backend:
               serviceName: git-service
               servicePort: 4007
+  backend:
+    serviceName: proxy-service
+    servicePort: 9093
