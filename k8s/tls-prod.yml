@@ -1,7 +1,7 @@
 apiVersion: cert-manager.io/v1alpha2
 kind: ClusterIssuer
 metadata:
-  name: hg-prod-issuer
+  name: prod-cluster-isr
   namespace: cert-manager
 spec:
   acme:
@@ -9,7 +9,7 @@ spec:
     server: https://acme-v02.api.letsencrypt.org/directory
     email: adigunhammed.lekan@gmail.com
     privateKeySecretRef:
-      name: hg-prod-certs-key
+      name: prod-certs-key
     solvers:
       - dns01:
           digitalocean:
@@ -21,12 +21,12 @@ spec:
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
 metadata:
-  name: hg-prod-certs
+  name: prod-certs
   namespace: cert-manager
 spec:
-  secretName: hg-certs-secret
+  secretName: prod-certs-secret
   issuerRef:
-    name: hg-prod-issuer
+    name: prod-cluster-isr
     kind: ClusterIssuer
   commonName: hostgoapp.com
   dnsNames:
