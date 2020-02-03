@@ -12,7 +12,7 @@ spec:
   tls:
     - hosts:
         - "*.hostgoapp.com"
-      secretName: hostgo-prod-certs
+      secretName: hg-certs-secret
   rules:
     - host: "*.hostgoapp.com"
       http:

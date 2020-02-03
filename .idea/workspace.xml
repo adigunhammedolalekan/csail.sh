@@ -3,7 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="d33e0391-4457-4e31-88c7-44ad1bcaa58c" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hostgolang" beforeDir="false" afterPath="$PROJECT_DIR$/hostgolang" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/k8s/ingress-prod.yml" beforeDir="false" afterPath="$PROJECT_DIR$/k8s/ingress-prod.yml" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
