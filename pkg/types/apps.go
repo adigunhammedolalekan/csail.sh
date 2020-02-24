@@ -12,6 +12,7 @@ type App struct {
 	AccessUrl           string `json:"access_url"`
 	RegistryDownloadUrl string `json:"registry_download_url"`
 	LocalAccessUrl      string `json:"local_access_url"`
+	GitUrl string `json:"git_url"`
 
 	Environments []Environment `json:"environments"`
 	Account      *Account      `json:"account" gorm:"-" sql:"-"`
@@ -30,6 +31,7 @@ type Release struct {
 	AppId         uint   `json:"app_id"`
 	LastCheckSum  string `json:"last_check_sum"`
 	VersionNumber int64  `json:"version"`
+	DockerUrl string `json:"docker_url"`
 }
 
 type ReleaseConfig struct {
@@ -42,6 +44,16 @@ type Instance struct {
 	Status  string `json:"status"`
 	Name    string `json:"name"`
 	Started string `json:"started"`
+}
+
+type Domain struct {
+	gorm.Model
+	AppId uint `json:"app_id"`
+	Address string `json:"address"`
+}
+
+func NewDomain(appId uint, addr string) *Domain {
+	return &Domain{AppId: appId, Address: addr}
 }
 
 type DeploymentSettings struct {
@@ -64,6 +76,14 @@ func NewRelease(appId uint, checkSum string, v int64) *Release {
 	}
 }
 
+func NewReleaseFromDockerUrl(appId uint, dockerUrl string, v int64) *Release {
+	return &Release{
+		AppId: appId,
+		DockerUrl: dockerUrl,
+		VersionNumber: v,
+	}
+}
+
 func NewEnvVariable(appId, resId uint, k, v string) *Environment {
 	return &Environment{
 		AppId:    appId,
@@ -78,5 +98,6 @@ func NewApp(name string, accountId uint) *App {
 		AccountId: accountId,
 		AppName:   name,
 		AccessUrl: fmt.Sprintf("https://%s.hostgoapp.com", name),
+		GitUrl: fmt.Sprintf("https://git.hostgoapp.com/%s.git", name),
 	}
 }

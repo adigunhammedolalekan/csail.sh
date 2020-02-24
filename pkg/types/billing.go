@@ -17,7 +17,14 @@ var (
 	"M1": {Name: "MASTER", Alias: "M1", Price: 170, Info: PlanInfo{Cpu: 8, Memory: 32}},
 	"M2": {Name: "GRAND MASTER", Alias: "M2", Price: 340, Info: PlanInfo{Cpu: 16, Memory: 64}},
 	}
-	DefaultPlan = Plans["SR"]
+	DefaultPlan = Plan{
+		Name:  "TEST",
+		Alias: "TST",
+		Price: 0,
+		Info:  PlanInfo{
+			Memory: 0.1, Cpu: 0.1,
+		},
+	}
 )
 
 type Plan struct {

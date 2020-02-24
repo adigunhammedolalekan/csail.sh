@@ -60,6 +60,36 @@ func (handler *DeploymentHandler) CreateDeploymentHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, &SuccessResponse{Error: false, Message: "deployment created", Data: r})
 }
 
+func (handler *DeploymentHandler) CreateDockerDeployment(ctx *gin.Context) {
+	account := handler.ensureAccount(ctx)
+	if account == nil {
+		return
+	}
+	var request struct{
+		AppName string `json:"app_name"`
+		DockerUrl string `json:"docker_url"`
+	}
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		BadRequestResponse(ctx, "bad request: malformed json body")
+		return
+	}
+	app, err := handler.appRepo.GetApp(request.AppName)
+	if err != nil {
+		BadRequestResponse(ctx, "app not found")
+		return
+	}
+	if account.ID != app.AccountId {
+		ForbiddenRequestResponse(ctx, "forbidden")
+		return
+	}
+	r, err := handler.repo.CreateDockerDeployment(app, request.DockerUrl)
+	if err != nil {
+		InternalServerErrorResponse(ctx, err.Error())
+		return
+	}
+	ctx.JSON(http.StatusOK, &SuccessResponse{Error: false, Message: "success", Data: r})
+}
+
 func (handler *DeploymentHandler) CreateGitDeploymentHandler(ctx *gin.Context) {
 	hookInfo := &types.HookInfo{}
 	if err := ctx.ShouldBindJSON(hookInfo); err != nil {
@@ -278,6 +308,36 @@ func (handler *DeploymentHandler) RollbackDeploymentHandler(ctx *gin.Context) {
 		Message: fmt.Sprintf("application successfully rolled back to %s deployment", version),
 		Data:    result,
 	})
+}
+
+func (handler *DeploymentHandler) AddDomainHandler(ctx *gin.Context) {
+	account := handler.ensureAccount(ctx)
+	if account == nil {
+		return
+	}
+	var request struct {
+		AppName string `json:"app_name"`
+		Domain string `json:"domain"`
+	}
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		BadRequestResponse(ctx, "bad request: malformed request's body")
+		return
+	}
+	app, err := handler.appRepo.GetApp(request.AppName)
+	if err != nil {
+		BadRequestResponse(ctx, "app not found")
+		return
+	}
+	if app.AccountId != account.ID {
+		ForbiddenRequestResponse(ctx, "forbidden")
+		return
+	}
+	dm, err := handler.appRepo.CreateDomain(app.ID, request.Domain)
+	if err != nil {
+		InternalServerErrorResponse(ctx, err.Error())
+		return
+	}
+	ctx.JSON(http.StatusOK, &SuccessResponse{Error: false, Message: "domain added", Data: dm})
 }
 
 func (handler *DeploymentHandler) ensureAccount(ctx *gin.Context) *types.Account {

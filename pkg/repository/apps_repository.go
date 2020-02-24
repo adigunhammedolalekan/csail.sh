@@ -14,6 +14,8 @@ var ErrAppNotFound = errors.New("app not found")
 var ErrFailedCreateApp = errors.New("failed to create a new app at this time. Please retry later")
 var ErrAppUpdateFailed = errors.New("failed to update app. Please retry")
 var ErrAppDataRetrieveFailed = errors.New("failed to retrieve app data. Please retry")
+var ErrDomainNotFound = errors.New("domain not found")
+var ErrDomainExists = errors.New("domain already exists in the system")
 
 //go:generate mockgen -destination=mocks/apps_repository_mock.go -package=mocks github.com/saas/hostgolang/pkg/repository AppsRepository
 type AppsRepository interface {
@@ -28,6 +30,9 @@ type AppsRepository interface {
 	ListRunningInstances(appName string) ([]types.Instance, error)
 	GetPlan(appId uint) (*types.Plan, error)
 	UpdatePlan(appId uint, planAlias string) error
+	GetDomain(address string) (*types.Domain, error)
+	GetDomainByAppId(appId uint) (*types.Domain, error)
+	CreateDomain(appId uint, address string) (*types.Domain, error)
 }
 
 type appsRepository struct {
@@ -202,6 +207,44 @@ func (a *appsRepository) UpdatePlan(appId uint, planAlias string) error {
 	}
 	_ = app
 	return errors.New("not yet implemented")
+}
+
+func (a *appsRepository) GetDomain(address string) (*types.Domain, error) {
+	d := &types.Domain{}
+	err := a.db.Table("domains").Where("address = ?", address).First(d).Error
+	if err != nil {
+		return nil, ErrDomainNotFound
+	}
+	return d, nil
+}
+
+func (a *appsRepository) GetDomainByAppId(appId uint) (*types.Domain, error) {
+	d := &types.Domain{}
+	err := a.db.Table("domains").Where("app_id = ?", appId).First(d).Error
+	if err != nil {
+		return nil, ErrDomainNotFound
+	}
+	return d, nil
+}
+
+func (a *appsRepository) CreateDomain(appId uint, address string) (*types.Domain, error) {
+	app, err := a.GetAppById(appId)
+	if err != nil {
+		return nil, err
+	}
+	dom, err := a.GetDomain(address)
+	if err == nil && dom.Address != "" {
+		return nil, ErrDomainExists
+	}
+	err = a.ks8.AddDomain(app.AppName, address)
+	if err != nil {
+		return nil, err
+	}
+	dom = types.NewDomain(appId, address)
+	if err := a.db.Create(dom).Error; err != nil {
+		return nil, err
+	}
+	return dom, nil
 }
 
 func NewAppsRepository(db *gorm.DB, nameGenerator namegenerator.Generator,

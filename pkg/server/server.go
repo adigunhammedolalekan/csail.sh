@@ -45,7 +45,7 @@ func NewServer(addr string) (*Server, error) {
 		ProxyServerAddress: os.Getenv("PROXY_SERVER_URL"),
 		Registry: config.RegistryConfig{
 			Url:      "registry.hostgolang.com",
-			Username: "lekan",
+			Username: "MASTER",
 			Password: "manman",
 		},
 		GitServerUrl: "http://git-service:4008",
@@ -97,6 +97,7 @@ func NewServer(addr string) (*Server, error) {
 	apiRouter.GET("/me/apps", apiHandler.GetAccountApps)
 	apiRouter.POST("/apps/deploy", deploymentHandler.CreateDeploymentHandler)
 	apiRouter.POST("/apps/git/deploy", deploymentHandler.CreateGitDeploymentHandler)
+	apiRouter.POST("/apps/docker/deploy", deploymentHandler.CreateDockerDeployment)
 	apiRouter.GET("/apps/configs/:appName", deploymentHandler.GetEnvironmentVars)
 	apiRouter.GET("/apps/logs/:appName", deploymentHandler.GetApplicationLogsHandler)
 	apiRouter.POST("/apps/configs/:appName", deploymentHandler.UpdateEnvironmentVars)
@@ -106,6 +107,7 @@ func NewServer(addr string) (*Server, error) {
 	apiRouter.PUT("/apps/rollback/:appName", deploymentHandler.RollbackDeploymentHandler)
 	apiRouter.POST("/apps/resource/new/:appName", resourcesDeploymentHandler.CreateResourceHandler)
 	apiRouter.DELETE("/apps/resource/remove/:appName", resourcesDeploymentHandler.DeleteResourceHandler)
+	apiRouter.POST("/apps/domain/new", deploymentHandler.AddDomainHandler)
 	apiRouter.POST("/apps/use", apiHandler.UseAppHandler)
 	apiRouter.GET("/status", apiHandler.StatusHandler)
 

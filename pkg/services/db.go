@@ -23,5 +23,5 @@ func migrate(db *gorm.DB) {
 		&types.App{}, &types.Environment{},
 		&types.Release{}, &types.DeploymentSettings{},
 		&types.Resource{}, &types.ResourceEnv{},
-		&types.ResourceConfig{}, &types.Quota{}, &types.Plan{})
+		&types.ResourceConfig{}, &types.Quota{}, &types.Plan{}, &types.Domain{})
 }

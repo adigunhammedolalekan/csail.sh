@@ -32,6 +32,18 @@ spec:
           - backend:
               serviceName: git-service
               servicePort: 4007
+    - host: "2fahero.com"
+      http:
+        paths:
+          - backend:
+              serviceName: proxy-service
+              servicePort: 9093
+    - host: "www.2fahero.com"
+      http:
+        paths:
+          - backend:
+              serviceName: proxy-service
+              servicePort: 9093
   backend:
     serviceName: proxy-service
     servicePort: 9093

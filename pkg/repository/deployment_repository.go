@@ -33,6 +33,7 @@ const tempClonePath = "/tmp/git"
 type DeploymentRepository interface {
 	CreateDeployment(app *types.App, reader io.Reader) (*types.DeploymentResult, error)
 	CreateGitDeployment(app *types.App, info *types.HookInfo) (*types.DeploymentResult, error)
+	CreateDockerDeployment(app *types.App, dockerUrl string) (*types.DeploymentResult, error)
 	UpdateEnvironmentVars(app *types.App, envs []types.Environment) error
 	GetApplicationLogs(appName string) (string, error)
 	CheckRelease(appId uint, r io.Reader) (string, error)
@@ -122,6 +123,58 @@ func (d *defaultDeploymentRepository) CreateDeployment(app *types.App, reader io
 	return result, nil
 }
 
+func (d *defaultDeploymentRepository) CreateDockerDeployment(app *types.App, dockerUrl string) (*types.DeploymentResult, error) {
+	rls, err := d.GetRelease(app.ID)
+	if err == nil && rls.DockerUrl == dockerUrl {
+		return nil, ErrNoChangeToDeploy
+	}
+	appName := app.AppName
+	var replicas uint = 1
+	settings, err := d.GetDeploymentSettings(app.ID)
+	if err == nil {
+		replicas = settings.Replicas
+	}
+
+	envs, _ := d.appRepo.GetEnvironmentVars(appName)
+	m := make(map[string]string, 0)
+	if envs != nil && len(envs) > 0 {
+		for _, e := range envs {
+			m[e.EnvKey] = e.EnvValue
+		}
+	}
+	opt := &types.CreateDeploymentOpts{
+		Envs:     m,
+		Name:     appName,
+		Replicas: int32(replicas),
+		Tag:      dockerUrl,
+		IsLocal:  true,
+		Memory:   settings.Plan.Info.Memory,
+		Cpu:      settings.Plan.Info.Cpu,
+	}
+	result, err := d.k8s.DeployService(opt)
+	if err != nil {
+		log.Println("failed to deploy service: ", err)
+		return nil, ErrDeploymentFailed
+	}
+	if err := d.proxy.Set(appName, result.Address); err != nil {
+		log.Println("failed to contact proxy server: ", err)
+		return nil, ErrDeploymentFailed
+	}
+	rls.DockerUrl = dockerUrl
+	rls.VersionNumber = rls.VersionNumber + 1
+	if err := d.updateRelease(rls); err != nil {
+		log.Println("failed to create a new release: ", err)
+	}
+	if err := d.CreateOrUpdateDeploymentSettings(app.ID, replicas); err != nil {
+		log.Println("failed to create deployment settings: ", err)
+	}
+	rs, err := d.GetRelease(app.ID)
+	if err == nil {
+		result.Version = fmt.Sprintf("v%d", rs.VersionNumber)
+	}
+	return result, nil
+}
+
 func (d *defaultDeploymentRepository) UpdateEnvironmentVars(app *types.App, envs []types.Environment) error {
 	return d.k8s.UpdateEnvs(app.AppName, envs)
 }
@@ -146,7 +199,7 @@ func (d *defaultDeploymentRepository) GetRelease(appId uint) (*types.Release, er
 	r := &types.Release{}
 	err := d.db.Table("releases").Where("app_id = ?", appId).First(r).Error
 	if err != nil {
-		return nil, ErrReleaseNotFound
+		return r, ErrReleaseNotFound
 	}
 	return r, nil
 }
@@ -199,7 +252,9 @@ func (d *defaultDeploymentRepository) CreateOrUpdateDeploymentSettings(appId, re
 }
 
 func (d *defaultDeploymentRepository) GetDeploymentSettings(appId uint) (*types.DeploymentSettings, error) {
-	settings := &types.DeploymentSettings{}
+	settings := &types.DeploymentSettings{
+		Plan: &types.DefaultPlan,
+	}
 	err := d.db.Table("deployment_settings").Where("app_id = ?", appId).First(settings).Error
 	if err != nil {
 		return settings, ErrNotFound

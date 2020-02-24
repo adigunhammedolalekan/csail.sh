@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/saas/hostgolang/pkg/types"
+	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/client-go/util/retry"
 
@@ -34,6 +35,7 @@ type K8sService interface {
 	UpdateEnvs(appName string, envs []types.Environment) error
 	ScaleApp(appName string, replicas int) error
 	ListRunningPods(appName string) ([]types.Instance, error)
+	AddDomain(appName, domain string) error
 }
 
 type defaultK8sService struct {
@@ -343,6 +345,62 @@ func (d *defaultK8sService) getNodeIp(nodeName string) (string, error) {
 		}
 	}
 	return nodeIp, nil
+}
+
+func (d *defaultK8sService) AddDomain(appName, domain string) error {
+	name := fmt.Sprintf("%s-ingress", appName)
+	in, err := d.client.ExtensionsV1beta1().Ingresses(stormNs).Get(name, metav1.GetOptions{})
+	if err == nil && in.Name != "" {
+		if err := d.deleteIngress(appName); err != nil {
+			return err
+		}
+	}
+	return d.createIngress(appName, domain)
+}
+
+func (d *defaultK8sService) deleteIngress(appName string) error {
+	name := fmt.Sprintf("%s-ingress", appName)
+	c := d.client.ExtensionsV1beta1().Ingresses(stormNs)
+	if err := c.Delete(name, &metav1.DeleteOptions{}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *defaultK8sService) createIngress(appName, domain string) error {
+	c := d.client.CoreV1().Services(stormNs)
+	svc, err := c.Get(appName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	ingressName := fmt.Sprintf("%s-ingress", appName)
+	ingress := &v1beta1.Ingress{}
+	ingress.Name = ingressName
+	ingress.Annotations = map[string]string{
+		"kubernetes.io/ingress.class": "nginx",
+		"nginx.ingress.kubernetes.io/proxy-body-size": "1000m",
+	}
+
+	ports := svc.Spec.Ports
+	var port int32 = 0
+	if len(ports) > 0 {
+		port = ports[0].Port
+	}
+	// define backend
+	backend := v1beta1.IngressBackend{
+		ServiceName: svc.Name,
+		ServicePort: intstr.FromInt(int(port)),
+	}
+	ingressRule := &v1beta1.IngressRule{Host: domain}
+	ingressRule.HTTP = &v1beta1.HTTPIngressRuleValue{
+		Paths: []v1beta1.HTTPIngressPath{{Backend: backend}},
+	}
+	ingress.Spec.Backend = &backend
+	ingress.Spec.Rules = []v1beta1.IngressRule{*ingressRule}
+	if _, err := d.client.ExtensionsV1beta1().Ingresses(stormNs).Create(ingress); err != nil {
+		return err
+	}
+	return nil
 }
 
 // dockerConfigJson returns a json rep of user's
