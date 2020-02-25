@@ -36,14 +36,20 @@ spec:
       http:
         paths:
           - backend:
-              serviceName: proxy-service
-              servicePort: 9093
+              serviceName: app-service
+              servicePort: 4005
     - host: "www.2fahero.com"
       http:
         paths:
           - backend:
-              serviceName: proxy-service
-              servicePort: 9093
+              serviceName: app-service
+              servicePort: 4005
+    - host: "lekan.wtf"
+      http:
+        paths:
+          - backend:
+              serviceName: app-service
+              servicePort: 4005
   backend:
     serviceName: proxy-service
     servicePort: 9093
