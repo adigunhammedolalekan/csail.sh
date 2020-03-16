@@ -15,7 +15,7 @@ import (
 )
 
 type ResourcesService interface {
-	DeployResource(app *types.App, envs []types.ResourceEnv, res res.Res) (*types.ResourceDeploymentResult, error)
+	DeployResource(app *types.App, envs []types.ResourceEnv, res res.Res, local bool) (*types.ResourceDeploymentResult, error)
 	DeleteResource(app *types.App, name string) error
 }
 
@@ -27,9 +27,13 @@ func NewResourcesService(c *kubernetes.Clientset) ResourcesService {
 	return &defaultResourcesService{client: c}
 }
 
-func (d *defaultResourcesService) DeployResource(app *types.App, resourcesEnvs []types.ResourceEnv, res res.Res) (*types.ResourceDeploymentResult, error) {
+func (d *defaultResourcesService) DeployResource(app *types.App, resourcesEnvs []types.ResourceEnv, res res.Res, local bool) (*types.ResourceDeploymentResult, error) {
 	serviceName := fmt.Sprintf("svc-%s-%s", res.Name(), app.AppName)
-	svc, err := d.createResourceService(serviceName, res.Port())
+	var svcType = v1.ServiceTypeLoadBalancer
+	if local {
+		svcType = v1.ServiceTypeClusterIP
+	}
+	svc, err := d.createResourceService(serviceName, res.Port(), svcType)
 	if err != nil {
 		return nil, err
 	}
@@ -50,6 +54,11 @@ func (d *defaultResourcesService) DeployResource(app *types.App, resourcesEnvs [
 			}
 		}
 	}
+	if local {
+		lbAddress = fmt.Sprintf("%s.%s:%d", serviceName, stormNs, res.Port())
+	}
+	// update deployment's environment variable to contain
+	// the newly added resources config
 	hostEnvKey := fmt.Sprintf("%s_HOST", strings.ToUpper(res.Name()))
 	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		newEnvs := make([]v1.EnvVar, 0)
@@ -75,7 +84,7 @@ func (d *defaultResourcesService) DeployResource(app *types.App, resourcesEnvs [
 	return result, nil
 }
 
-func (d *defaultResourcesService) createResourceService(serviceName string, targetPort int) (*v1.Service, error) {
+func (d *defaultResourcesService) createResourceService(serviceName string, targetPort int, svcType v1.ServiceType) (*v1.Service, error) {
 	svcClient := d.client.CoreV1()
 	if s, err := svcClient.Services(stormNs).Get(serviceName, metav1.GetOptions{}); err == nil && s.Name != "" {
 		if err := svcClient.Services(stormNs).Delete(serviceName, &metav1.DeleteOptions{}); err != nil {
@@ -100,7 +109,7 @@ func (d *defaultResourcesService) createResourceService(serviceName string, targ
 	svc.Spec = v1.ServiceSpec{
 		Ports:    []v1.ServicePort{port},
 		Selector: label,
-		Type:     v1.ServiceTypeLoadBalancer,
+		Type:     svcType,
 	}
 	s, err := svcClient.Services(stormNs).Create(svc)
 	if err != nil {

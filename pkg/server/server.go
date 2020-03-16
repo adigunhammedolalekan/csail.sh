@@ -13,6 +13,7 @@ import (
 	"github.com/saas/hostgolang/pkg/repository"
 	"github.com/saas/hostgolang/pkg/services"
 	"github.com/saas/hostgolang/pkg/session"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"os"
@@ -55,11 +56,11 @@ func NewServer(addr string) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	k8sClient, err := createK8sClient()
+	k8sClient, dy, err := createK8sClient()
 	if err != nil {
 		return nil, err
 	}
-	k8sService := services.NewK8sService(k8sClient, cfg)
+	k8sService := services.NewK8sService(k8sClient, dy, cfg)
 	gitService := services.NewGitService(cfg)
 	dockerService, err := createDockerService(cfg)
 	if err != nil {
@@ -107,7 +108,9 @@ func NewServer(addr string) (*Server, error) {
 	apiRouter.PUT("/apps/rollback/:appName", deploymentHandler.RollbackDeploymentHandler)
 	apiRouter.POST("/apps/resource/new/:appName", resourcesDeploymentHandler.CreateResourceHandler)
 	apiRouter.DELETE("/apps/resource/remove/:appName", resourcesDeploymentHandler.DeleteResourceHandler)
+	apiRouter.GET("/apps/releases/:appName", deploymentHandler.GetReleasesHandler)
 	apiRouter.POST("/apps/domain/new", deploymentHandler.AddDomainHandler)
+	apiRouter.DELETE("/apps/domain/remove", deploymentHandler.RemoveDomainHandler)
 	apiRouter.POST("/apps/use", apiHandler.UseAppHandler)
 	apiRouter.GET("/status", apiHandler.StatusHandler)
 
@@ -124,20 +127,24 @@ func NewServer(addr string) (*Server, error) {
 	}, nil
 }
 
-func createK8sClient() (*kubernetes.Clientset, error) {
+func createK8sClient() (*kubernetes.Clientset, dynamic.Interface, error) {
 	k8sConfigPath := ""
 	if k8sConfigPath = os.Getenv("K8S_CONFIG_DIR"); k8sConfigPath == "" {
 		k8sConfigPath = filepath.Join(os.Getenv("HOME"), ".kube", "config")
 	}
 	c, err := clientcmd.BuildConfigFromFlags("", k8sConfigPath)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	k8sClient, err := kubernetes.NewForConfig(c)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return k8sClient, nil
+	dy, err := dynamic.NewForConfig(c)
+	if err != nil {
+		return nil, nil, err
+	}
+	return k8sClient, dy, nil
 }
 
 func createDockerService(cfg *config.Config) (services.DockerService, error) {

@@ -42,6 +42,7 @@ type DeploymentRepository interface {
 	CreateOrUpdateDeploymentSettings(appId, replicas uint) error
 	GetDeploymentSettings(appId uint) (*types.DeploymentSettings, error)
 	RollbackDeployment(appId uint, version string) (*types.DeploymentResult, error)
+	GetReleases(appId uint) ([]types.Release, error)
 }
 
 type defaultDeploymentRepository struct {
@@ -128,6 +129,12 @@ func (d *defaultDeploymentRepository) CreateDockerDeployment(app *types.App, doc
 	if err == nil && rls.DockerUrl == dockerUrl {
 		return nil, ErrNoChangeToDeploy
 	}
+	if err == ErrReleaseNotFound {
+		rls = types.NewReleaseFromDockerUrl(app.ID, dockerUrl, 1)
+		if err := d.db.Create(rls).Error; err != nil {
+			return nil, ErrDeploymentFailed
+		}
+	}
 	appName := app.AppName
 	var replicas uint = 1
 	settings, err := d.GetDeploymentSettings(app.ID)
@@ -161,7 +168,6 @@ func (d *defaultDeploymentRepository) CreateDockerDeployment(app *types.App, doc
 		return nil, ErrDeploymentFailed
 	}
 	rls.DockerUrl = dockerUrl
-	rls.VersionNumber = rls.VersionNumber + 1
 	if err := d.updateRelease(rls); err != nil {
 		log.Println("failed to create a new release: ", err)
 	}
@@ -169,6 +175,7 @@ func (d *defaultDeploymentRepository) CreateDockerDeployment(app *types.App, doc
 		log.Println("failed to create deployment settings: ", err)
 	}
 	rs, err := d.GetRelease(app.ID)
+	log.Println(rs, err)
 	if err == nil {
 		result.Version = fmt.Sprintf("v%d", rs.VersionNumber)
 	}
@@ -199,6 +206,7 @@ func (d *defaultDeploymentRepository) GetRelease(appId uint) (*types.Release, er
 	r := &types.Release{}
 	err := d.db.Table("releases").Where("app_id = ?", appId).First(r).Error
 	if err != nil {
+		log.Println(err)
 		return r, ErrReleaseNotFound
 	}
 	return r, nil
@@ -241,6 +249,15 @@ func (d *defaultDeploymentRepository) CreateRelease(appId uint, checkSum string,
 		}
 	}(d.storage, data, cfg)
 	return nil
+}
+
+func (d *defaultDeploymentRepository) GetReleases(appId uint) ([]types.Release, error) {
+	data := make([]types.Release, 0)
+	err := d.db.Table("releases").Where("app_id = ?", appId).Find(&data).Error
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }
 
 func (d *defaultDeploymentRepository) CreateOrUpdateDeploymentSettings(appId, replicas uint) error {

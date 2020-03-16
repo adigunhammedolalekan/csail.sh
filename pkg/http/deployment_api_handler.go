@@ -340,6 +340,63 @@ func (handler *DeploymentHandler) AddDomainHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, &SuccessResponse{Error: false, Message: "domain added", Data: dm})
 }
 
+func (handler *DeploymentHandler) RemoveDomainHandler(ctx *gin.Context) {
+	account := handler.ensureAccount(ctx)
+	if account == nil {
+		return
+	}
+	var request struct {
+		AppName string `json:"app_name"`
+		Domain string `json:"domain"`
+	}
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		BadRequestResponse(ctx, "bad request: malformed request's body")
+		return
+	}
+	app, err := handler.appRepo.GetApp(request.AppName)
+	if err != nil {
+		BadRequestResponse(ctx, "app not found")
+		return
+	}
+	if app.AccountId != account.ID {
+		ForbiddenRequestResponse(ctx, "forbidden")
+		return
+	}
+	err = handler.appRepo.RemoveDomain(app.ID, request.Domain)
+	if err != nil {
+		InternalServerErrorResponse(ctx, err.Error())
+		return
+	}
+	ctx.JSON(http.StatusOK, &SuccessResponse{Error: false, Message: "domain removed successfully"})
+}
+
+func (handler *DeploymentHandler) GetReleasesHandler(ctx *gin.Context) {
+	account := handler.ensureAccount(ctx)
+	if account == nil {
+		return
+	}
+	appName := ctx.Param("appName")
+	if appName == "" {
+		BadRequestResponse(ctx, "bad request: app name is missing")
+		return
+	}
+	app, err := handler.appRepo.GetApp(appName)
+	if err != nil {
+		BadRequestResponse(ctx, "app not found")
+		return
+	}
+	if app.AccountId != account.ID {
+		ForbiddenRequestResponse(ctx, "forbidden")
+		return
+	}
+	data, err := handler.repo.GetReleases(app.ID)
+	if err != nil {
+		InternalServerErrorResponse(ctx, err.Error())
+		return
+	}
+	ctx.JSON(http.StatusOK, &SuccessResponse{Error: false, Message: "success", Data: data})
+}
+
 func (handler *DeploymentHandler) ensureAccount(ctx *gin.Context) *types.Account {
 	token := ctx.GetHeader(tokenHeaderName)
 	if token == "" {

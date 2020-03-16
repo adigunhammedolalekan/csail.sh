@@ -33,6 +33,7 @@ type AppsRepository interface {
 	GetDomain(address string) (*types.Domain, error)
 	GetDomainByAppId(appId uint) (*types.Domain, error)
 	CreateDomain(appId uint, address string) (*types.Domain, error)
+	RemoveDomain(appId uint, address string) error
 }
 
 type appsRepository struct {
@@ -245,6 +246,21 @@ func (a *appsRepository) CreateDomain(appId uint, address string) (*types.Domain
 		return nil, err
 	}
 	return dom, nil
+}
+
+func (a *appsRepository) RemoveDomain(appId uint, address string) error {
+	app, err := a.GetAppById(appId)
+	if err != nil {
+		return err
+	}
+	err = a.db.Table("domains").Where("app_id = ? AND address = ?", appId, address).Delete(&types.Domain{}).Error
+	if err != nil {
+		return err
+	}
+	if err := a.ks8.RemoveDomain(app.AppName, address); err != nil {
+		return err
+	}
+	return nil
 }
 
 func NewAppsRepository(db *gorm.DB, nameGenerator namegenerator.Generator,

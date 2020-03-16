@@ -8,6 +8,9 @@ import (
 	"github.com/saas/hostgolang/pkg/types"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/util/retry"
 
 	"github.com/saas/hostgolang/pkg/config"
@@ -27,6 +30,7 @@ import (
 const stormNs = "namespace-storm"
 const registrySecretName = "storm-secret"
 const validPortRange = 65535
+const letsEncryptProd = "https://acme-v02.api.letsencrypt.org/directory"
 
 //go:generate mockgen -destination=mocks/k8s_service_mock.go -package=mocks github.com/saas/hostgolang/pkg/services K8sService
 type K8sService interface {
@@ -36,15 +40,17 @@ type K8sService interface {
 	ScaleApp(appName string, replicas int) error
 	ListRunningPods(appName string) ([]types.Instance, error)
 	AddDomain(appName, domain string) error
+	RemoveDomain(appName, domain string) error
 }
 
 type defaultK8sService struct {
 	client *kubernetes.Clientset
+	dy dynamic.Interface
 	cfg    *config.Config
 }
 
-func NewK8sService(client *kubernetes.Clientset, config *config.Config) K8sService {
-	d := &defaultK8sService{client: client, cfg: config}
+func NewK8sService(client *kubernetes.Clientset, dy dynamic.Interface, config *config.Config) K8sService {
+	d := &defaultK8sService{client: client, cfg: config, dy: dy}
 	if err := d.createNameSpace(); err != nil {
 		log.Println("Error occurred while creating namespace: ", err)
 	}
@@ -348,18 +354,22 @@ func (d *defaultK8sService) getNodeIp(nodeName string) (string, error) {
 }
 
 func (d *defaultK8sService) AddDomain(appName, domain string) error {
-	name := fmt.Sprintf("%s-ingress", appName)
+	name := fmt.Sprintf("%s-ingress", domain)
 	in, err := d.client.ExtensionsV1beta1().Ingresses(stormNs).Get(name, metav1.GetOptions{})
 	if err == nil && in.Name != "" {
-		if err := d.deleteIngress(appName); err != nil {
+		if err := d.deleteIngress(appName, domain); err != nil {
 			return err
 		}
 	}
 	return d.createIngress(appName, domain)
 }
 
-func (d *defaultK8sService) deleteIngress(appName string) error {
-	name := fmt.Sprintf("%s-ingress", appName)
+func (d *defaultK8sService) RemoveDomain(appName, domain string) error {
+	return d.deleteIngress(appName, domain)
+}
+
+func (d *defaultK8sService) deleteIngress(appName, domain string) error {
+	name := fmt.Sprintf("%s-ingress", domain)
 	c := d.client.ExtensionsV1beta1().Ingresses(stormNs)
 	if err := c.Delete(name, &metav1.DeleteOptions{}); err != nil {
 		return err
@@ -373,12 +383,19 @@ func (d *defaultK8sService) createIngress(appName, domain string) error {
 	if err != nil {
 		return err
 	}
-	ingressName := fmt.Sprintf("%s-ingress", appName)
+	if err := d.provisionCertificate(appName, domain); err != nil {
+		log.Println("ProvisionCertError ", err)
+		return err
+	}
+	issuerName := fmt.Sprintf("%s-issuer", domain)
+	ingressName := fmt.Sprintf("%s-ingress", domain)
+	secretName := fmt.Sprintf("%s-sec", domain)
 	ingress := &v1beta1.Ingress{}
 	ingress.Name = ingressName
 	ingress.Annotations = map[string]string{
 		"kubernetes.io/ingress.class": "nginx",
-		"nginx.ingress.kubernetes.io/proxy-body-size": "1000m",
+		"nginx.ingress.kubernetes.io/proxy-body-size": "10000m",
+		"cert-manager.io/cluster-issuer": issuerName,
 	}
 
 	ports := svc.Spec.Ports
@@ -396,11 +413,82 @@ func (d *defaultK8sService) createIngress(appName, domain string) error {
 		Paths: []v1beta1.HTTPIngressPath{{Backend: backend}},
 	}
 	ingress.Spec.Backend = &backend
+	ingress.Spec.TLS = []v1beta1.IngressTLS{
+		{Hosts: []string{domain}, SecretName: secretName},
+	}
 	ingress.Spec.Rules = []v1beta1.IngressRule{*ingressRule}
 	if _, err := d.client.ExtensionsV1beta1().Ingresses(stormNs).Create(ingress); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (d *defaultK8sService) provisionCertificate(appName, domain string) error {
+	ns := "cert-manager"
+	issuerResources := schema.GroupVersionResource{Group: "cert-manager.io", Version: "v1alpha2", Resource: "clusterissuer"}
+	secretName := fmt.Sprintf("%s-key", domain)
+	issuerName := fmt.Sprintf("%s-issuer", domain)
+	certIssuer := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "cert-manager.io/v1alpha2",
+			"kind": "ClusterIssuer",
+			"metadata": map[string]interface{}{
+				"name": issuerName,
+				"namespace": ns,
+			},
+			"spec": map[string]interface{} {
+				"acme": map[string]interface{} {
+					"email" : "adigunhammed.lekan@gmail.com",
+					"server": letsEncryptProd,
+					"privateKeySecretRef": map[string]interface{} {
+						"name": secretName,
+					},
+					"solvers": []map[string]interface{} {
+						{"http01": map[string] interface{} {
+							"ingress": map[string]interface{} {
+								"class": "nginx",
+							},
+						}},
+					},
+				},
+			},
+		},
+	}
+	_, err := d.dy.Resource(issuerResources).Create(certIssuer, metav1.CreateOptions{})
+	if err != nil {
+		log.Println("IssuerError ", err)
+		return err
+	}
+	return d.createCertificate(issuerName, appName, domain)
+}
+
+func (d *defaultK8sService) createCertificate(issuerName, appName, domain string) error {
+	secretName := fmt.Sprintf("%s-sec", domain)
+	name := fmt.Sprintf("%s-cert", domain)
+	ns := "cert-manager"
+
+	certResource := schema.GroupVersionResource{Group: "cert-manager.io", Version: "v1alpha2", Resource: "certificate"}
+	cert := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "cert-manager.io/v1alpha2",
+			"kind": "Certificate",
+			"metadata": map[string]interface{} {
+				"name": name,
+				"namespace": ns,
+			},
+			"spec": map[string]interface{} {
+				"secretName": secretName,
+				"issuerRef": map[string]interface{} {
+					"name": issuerName,
+					"kind": "ClusterIssuer",
+				},
+				"commonName": domain,
+				"dnsNames": []string{domain},
+			},
+		},
+	}
+	_, err := d.dy.Resource(certResource).Create(cert, metav1.CreateOptions{})
+	return err
 }
 
 // dockerConfigJson returns a json rep of user's

@@ -70,6 +70,7 @@ func (d *defaultResourcesDeploymentRepo) DeployResource(opt *types.DeployResourc
 			"MYSQL_USER": username,
 			"MYSQL_PASSWORD": password,
 			"MYSQL_DATABASE": dbName,
+			"MYSQL_ROOT_PASSWORD": password,
 		}
 		r = mysql.NewMysql(opt.Memory, opt.Cpu, opt.StorageSize, m)
 	case "mongo":
@@ -89,7 +90,6 @@ func (d *defaultResourcesDeploymentRepo) DeployResource(opt *types.DeployResourc
 	}
 	resource := types.NewResource(r.Name(), app.ID)
 	if err := tx.Create(resource).Error; err != nil {
-		log.Println(err)
 		tx.Rollback()
 		return nil, ErrProvisionResource
 	}
@@ -97,7 +97,6 @@ func (d *defaultResourcesDeploymentRepo) DeployResource(opt *types.DeployResourc
 		Memory: opt.Memory, Cpu: opt.Cpu, StorageSize: opt.StorageSize,
 	})
 	if err := tx.Create(rCfg).Error; err != nil {
-		log.Println(err)
 		tx.Rollback()
 		return nil, ErrProvisionResource
 	}
@@ -105,7 +104,6 @@ func (d *defaultResourcesDeploymentRepo) DeployResource(opt *types.DeployResourc
 	for k, v := range r.Envs() {
 		rEnv := types.NewEnvVariable(app.ID, resource.ID , k, v)
 		if err := tx.Create(rEnv).Error; err != nil {
-			log.Println(err)
 			tx.Rollback()
 			return nil, ErrProvisionResource
 		}
@@ -114,7 +112,7 @@ func (d *defaultResourcesDeploymentRepo) DeployResource(opt *types.DeployResourc
 	if err := tx.Commit().Error; err != nil {
 		return nil, ErrProvisionResource
 	}
-	result, err := d.k8s.DeployResource(app, envs, r)
+	result, err := d.k8s.DeployResource(app, envs, r, true)
 	if err != nil {
 		return nil, err
 	}
