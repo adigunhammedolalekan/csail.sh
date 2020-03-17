@@ -55,7 +55,7 @@ func (d *defaultResourcesService) DeployResource(app *types.App, resourcesEnvs [
 		}
 	}
 	if local {
-		lbAddress = fmt.Sprintf("%s.%s:%d", serviceName, stormNs, res.Port())
+		lbAddress = fmt.Sprintf("%s.%s:%d", svc.Name, stormNs, res.Port())
 	}
 	// update deployment's environment variable to contain
 	// the newly added resources config
@@ -137,11 +137,11 @@ func (d *defaultResourcesService) createResourceStatefulSet(appName string, svc 
 			return nil, err
 		}
 	}
-	cpu, err := resource.ParseQuantity(fmt.Sprintf("%fm", res.Quota().Cpu*1000))
+	cpu, err := resource.ParseQuantity(fmt.Sprintf("%fm", res.Quota().Cpu * 1000))
 	if err != nil {
 		return nil, err
 	}
-	memory, err := resource.ParseQuantity(fmt.Sprintf("%fMi", res.Quota().Memory*1000))
+	memory, err := resource.ParseQuantity(fmt.Sprintf("%fMi", res.Quota().Memory * 1000))
 	if err != nil {
 		return nil, err
 	}

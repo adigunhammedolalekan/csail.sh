@@ -2,15 +2,16 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d33e0391-4457-4e31-88c7-44ad1bcaa58c" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/k8s/local/configs.yml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/k8s/local/deployments.yml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/k8s/local/ingress.yml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/k8s/local/pvc.yml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/k8s/local/secrets.yml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/k8s/local/services.yml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/k8s/local/statefulsets.yml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/k8s/local/storage-class.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hostgolang" beforeDir="false" afterPath="$PROJECT_DIR$/hostgolang" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/k8s/tls-prod.yml" beforeDir="false" afterPath="$PROJECT_DIR$/k8s/tls-prod.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/http/deployment_api_handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/http/deployment_api_handler.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/repository/apps_repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/repository/apps_repository.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/repository/deployment_repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/repository/deployment_repository.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/repository/resources_deployment_repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/repository/resources_deployment_repository.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/server/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/server/server.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/services/k8s_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/services/k8s_service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/Makefile" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/services/resources_k8s_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/services/resources_k8s_service.go" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -41,18 +42,19 @@
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="go.import.settings.migrated" value="true" />
     <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/k8s/local" />
     <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
   </component>
   <component name="RecentsManager">
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$" />
-    </key>
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/k8s/local" />
       <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/proxy" />
       <recent name="$PROJECT_DIR$/frontend" />
       <recent name="$PROJECT_DIR$/pkg/services" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
     </key>
   </component>
   <component name="RunDashboard">

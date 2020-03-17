@@ -1,0 +1,114 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hostgo-app
+  labels:
+    web: app-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      web: app-service
+  template:
+    spec:
+      containers:
+        - name: hostgo-container
+          image: registry-service:6003/hostgo:latest
+          ports:
+            - containerPort: 4005
+              protocol: TCP
+              name: access-port
+          env:
+            - name: K8S_CONFIG_DIR
+              value: /var/kube/config
+            - name: MINIO_ACCESS_KEY
+              value: yourMinioKey
+            - name: MINIO_SECRET_KEY
+              value: yourMinioSecret
+            - name: MINIO_HOST
+              value: storage-service:9000
+            - name: DOCKER_HOST
+              value: tcp://localhost:2375
+            - name: JWT_SECRET
+              value: jwt$ecre7
+          imagePullPolicy: Always
+        - name: docker-container
+          image: docker:18.05-dind
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: dind-storage
+              mountPath: /var/lib/docker
+          ports:
+            - containerPort: 2375
+              protocol: TCP
+              name: docker-port
+      imagePullSecrets:
+        - name: hostgo-secret
+      volumes:
+        - name: dind-storage
+          emptyDir: {}
+    metadata:
+      labels:
+        web: app-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: proxy
+  labels:
+    app: proxy-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: proxy-service
+  template:
+    spec:
+      containers:
+        - name: proxy-container
+          image: registry-service:6003/proxy:latest
+          ports:
+            - containerPort: 9093
+              protocol: TCP
+              name: proxy-port
+            - containerPort: 80
+              protocol: TCP
+              name: acc-httpport
+            - containerPort: 443
+              protocol: TCP
+              name: https-port
+          env:
+            - name: REDIS_HOST
+              value: proxy-redis-service:6379
+      imagePullSecrets:
+        - name: hostgo-secret
+    metadata:
+      labels:
+        app: proxy-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo
+  labels:
+    app: echo-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: echo-service
+  template:
+    spec:
+      containers:
+        - name: echo-container
+          image: hashicorp/http-echo
+          ports:
+            - containerPort: 5678
+              protocol: TCP
+              name: e-port
+          args:
+            - "-text=Hello, Echo"
+    metadata:
+      labels:
+        app: echo-service

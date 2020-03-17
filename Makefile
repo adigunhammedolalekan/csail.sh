@@ -15,10 +15,23 @@ deploy:
 	make build
 	make k8s
 
+kube-local:
+	kubectl apply -f k8s/local/storage-class.yml
+	kubectl apply -f k8s/local/secrets.yml
+	kubectl apply -f k8s/local/configs.yml
+	kubectl apply -f k8s/local/services.yml
+	kubectl apply -f k8s/local/statefulsets.yml
+	kubectl apply -f k8s/local/deployments.yml
+	kubectl apply -f k8s/local/ingress.yml
+
 ingress:
 	# install ingress
 	kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/nginx-0.30.0/deploy/static/mandatory.yaml
 	kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/nginx-0.26.1/deploy/static/provider/cloud-generic.yaml
+
+delete-ingress:
+	kubectl delete -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/nginx-0.30.0/deploy/static/mandatory.yaml
+	kubectl delete -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/nginx-0.26.1/deploy/static/provider/cloud-generic.yaml
 
 cert-manager:
 	# install cert-manager
