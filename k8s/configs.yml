@@ -8,7 +8,6 @@ data:
   POSTGRES_DB: hostgolang
   POSTGRES_USER: postgres
   POSTGRES_PASSWORD: manman
-
 ---
 apiVersion: v1
 kind: ConfigMap

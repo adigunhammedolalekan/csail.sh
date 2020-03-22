@@ -6,7 +6,6 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/saas/hostgolang/pkg/services"
 	"github.com/saas/hostgolang/pkg/types"
-	"log"
 )
 
 var ErrDuplicateName = errors.New("an app already exists with that name")
@@ -70,11 +69,6 @@ func (a *appsRepository) CreateApp(name, plan string, accountId uint) (*types.Ap
 	}
 	appPlan := types.NewPlan(app.ID, plan)
 	if err := tx.Create(appPlan).Error; err != nil {
-		tx.Rollback()
-		return nil, ErrFailedCreateApp
-	}
-	if err := a.gitService.CreateRepository(name); err != nil {
-		log.Println("failed to create repository ", err)
 		tx.Rollback()
 		return nil, ErrFailedCreateApp
 	}

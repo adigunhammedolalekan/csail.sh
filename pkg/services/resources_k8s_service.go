@@ -137,6 +137,7 @@ func (d *defaultResourcesService) createResourceStatefulSet(appName string, svc 
 			return nil, err
 		}
 	}
+
 	cpu, err := resource.ParseQuantity(fmt.Sprintf("%fm", res.Quota().Cpu * 1000))
 	if err != nil {
 		return nil, err
@@ -163,7 +164,7 @@ func (d *defaultResourcesService) createResourceStatefulSet(appName string, svc 
 		container.Args = args
 	}
 	container.Env = envs
-	container.Resources = v1.ResourceRequirements{
+	r_ := v1.ResourceRequirements{
 		Limits: v1.ResourceList{
 			v1.ResourceMemory: memory,
 			v1.ResourceCPU:    cpu,
@@ -173,6 +174,7 @@ func (d *defaultResourcesService) createResourceStatefulSet(appName string, svc 
 			v1.ResourceMemory: memory,
 		},
 	}
+	_ = r_
 	container.Ports = []v1.ContainerPort{{
 		Name:          truncString(fmt.Sprintf("%15s", name+"port")),
 		ContainerPort: int32(res.Port()),
@@ -202,6 +204,7 @@ func (d *defaultResourcesService) createResourceStatefulSet(appName string, svc 
 			v1.ResourceStorage: storageQuantity,
 		},
 	}
+
 	st.Spec.VolumeClaimTemplates = []v1.PersistentVolumeClaim{pvc}
 	return d.client.AppsV1().StatefulSets(stormNs).Create(st)
 }

@@ -114,7 +114,7 @@ func (d *defaultK8sService) UpdateEnvs(appName string, envs []types.Environment)
 		portValue := ""
 		podEnvs := deployment.Spec.Template.Spec.Containers[0].Env
 		for _, pe := range podEnvs {
-			if strings.ToLower(pe.Name) == "port" {
+			if strings.ToLower(strings.TrimSpace(pe.Name)) == "port" {
 				portValue = pe.Value
 				break
 			}

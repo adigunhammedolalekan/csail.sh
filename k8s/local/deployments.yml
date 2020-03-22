@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
         - name: hostgo-container
-          image: registry-service:6003/hostgo:latest
+          image: registry.csail.app/hostgo
           ports:
             - containerPort: 4005
               protocol: TCP
@@ -67,7 +67,7 @@ spec:
     spec:
       containers:
         - name: proxy-container
-          image: registry-service:6003/proxy:latest
+          image: registry.csail.app/proxy
           ports:
             - containerPort: 9093
               protocol: TCP

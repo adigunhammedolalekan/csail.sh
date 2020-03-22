@@ -33,6 +33,7 @@ type DeployResourcesOpt struct {
 	Memory      float64 `json:"memory"`
 	Cpu         float64 `json:"cpu"`
 	StorageSize float64 `json:"storage_size"`
+	Local bool
 }
 
 

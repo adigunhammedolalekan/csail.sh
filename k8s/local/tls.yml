@@ -1,0 +1,23 @@
+apiVersion: cert-manager.io/v1alpha2
+kind: ClusterIssuer
+metadata:
+  name: local-cert-issuer
+  namespace: cert-manager
+spec:
+  ca:
+    secretName: local-https-secret
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: local-ca-cert
+  namespace: cert-manager
+spec:
+  secretName: local-cert-secret
+  issuerRef:
+    name: local-cert-issuer
+    kind: ClusterIssuer
+  commonName: csail.app
+  dnsNames:
+    - csail.app
+    - '*.csail.app'
