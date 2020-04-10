@@ -24,6 +24,9 @@ func NewProxyClient(cfg *config.Config) (Client, error) {
 	if _, err := url.Parse(cfg.ProxyServerAddress); err != nil {
 		return nil, err
 	}
+	if len(cfg.ProxySecret) == 0 {
+		return nil, errors.New("proxy secret is missing")
+	}
 	c := &http.Client{Timeout: 30 * time.Second}
 	return &defaultProxyClient{httpClient: c, cfg: cfg}, nil
 }
@@ -51,6 +54,7 @@ func (c *defaultProxyClient) Set(key, value string) error {
 	if err != nil {
 		return err
 	}
+	req.Header.Add("X-Proxy-Secret", c.cfg.ProxySecret)
 	r, err := c.httpClient.Do(req)
 	if err != nil {
 		return err

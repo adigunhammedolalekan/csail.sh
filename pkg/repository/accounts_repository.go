@@ -15,7 +15,7 @@ var ErrAccountRetrieveFailed = errors.New("failed to retrieve account account da
 var ErrAuthenticationFailed = errors.New("authentication failed: email and password does not match our record")
 var ErrAuthServerFailed = errors.New("failed to finish authentication at this time. Please retry later")
 
-//go:generate mockgen -destination=mocks/accounts_repository_mock.go -package=mocks github.com/saas/hostgolang/pkg/repository AccountRepository
+//go:generate mockgen -destination=../mocks/accounts_repository_mock.go -package=mocks github.com/saas/hostgolang/pkg/repository AccountRepository
 type AccountRepository interface {
 	CreateAccount(opt *types.NewAccountOpts) (*types.Account, error)
 	AuthenticateAccount(opt *types.AuthenticateAccountOpts) (*types.Account, error)

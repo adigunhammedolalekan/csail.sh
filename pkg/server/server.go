@@ -15,6 +15,7 @@ import (
 	"github.com/saas/hostgolang/pkg/session"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"os"
 	"path/filepath"
@@ -42,26 +43,34 @@ func NewServer(addr string) (*Server, error) {
 	if err := redisClient.Ping().Err(); err != nil {
 		return nil, err
 	}
-	cfg := &config.Config {
+	cfg := &config.Config{
 		ProxyServerAddress: os.Getenv("PROXY_SERVER_URL"),
+		ProxySecret:        os.Getenv("PROXY_SECRET"),
 		Registry: config.RegistryConfig{
 			Url:      "registry.hostgolang.com",
 			Username: "MASTER",
 			Password: "manman",
 		},
-		GitServerUrl: "http://git-service:4008",
-		GitTcpAddr: ":4009",
 	}
+
 	proxyClient, err := proxy.NewProxyClient(cfg)
 	if err != nil {
 		return nil, err
 	}
-	k8sClient, dy, err := createK8sClient()
+
+	k8sConfig, err := createK8sClient()
 	if err != nil {
 		return nil, err
 	}
-	k8sService := services.NewK8sService(k8sClient, dy, cfg)
-	gitService := services.NewGitService(cfg)
+	k8sClient, err := kubernetes.NewForConfig(k8sConfig)
+	if err != nil {
+		return nil, err
+	}
+	dy, err := dynamic.NewForConfig(k8sConfig)
+	if err != nil {
+		return nil, err
+	}
+	k8sService := services.NewK8sService(k8sClient, dy, cfg, k8sConfig)
 	dockerService, err := createDockerService(cfg)
 	if err != nil {
 		return nil, err
@@ -78,12 +87,12 @@ func NewServer(addr string) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	resourseK8sClient := services.NewResourcesService(k8sClient)
+	resourseK8sClient := services.NewResourcesService(k8sClient, k8sService)
 	sessionStore := session.NewRedisSessionStore(redisClient)
 	accountRepo := repository.NewAccountRepository(db, sessionStore)
-	appRepo := repository.NewAppsRepository(db, namegenerator.NewNameGenerator(time.Now().UnixNano()), k8sService, gitService)
+	appRepo := repository.NewAppsRepository(db, namegenerator.NewNameGenerator(time.Now().UnixNano()), k8sService)
 	deploymentRepo := repository.NewDeploymentRepository(db, dockerService, k8sService,
-		proxyClient, appRepo, storageClient, cfg, gitService)
+		proxyClient, appRepo, storageClient, cfg)
 	resourceRepo := repository.NewResourcesDeploymentRepository(db, appRepo, accountRepo, resourseK8sClient)
 
 	rd := http.NewHtmlRenderer()
@@ -97,7 +106,6 @@ func NewServer(addr string) (*Server, error) {
 	apiRouter.POST("/me/apps", apiHandler.CreateAppHandler)
 	apiRouter.GET("/me/apps", apiHandler.GetAccountApps)
 	apiRouter.POST("/apps/deploy", deploymentHandler.CreateDeploymentHandler)
-	apiRouter.POST("/apps/git/deploy", deploymentHandler.CreateGitDeploymentHandler)
 	apiRouter.POST("/apps/docker/deploy", deploymentHandler.CreateDockerDeployment)
 	apiRouter.GET("/apps/configs/:appName", deploymentHandler.GetEnvironmentVars)
 	apiRouter.GET("/apps/logs/:appName", deploymentHandler.GetApplicationLogsHandler)
@@ -110,14 +118,15 @@ func NewServer(addr string) (*Server, error) {
 	apiRouter.DELETE("/apps/resource/remove/:appName", resourcesDeploymentHandler.DeleteResourceHandler)
 	apiRouter.GET("/apps/releases/:appName", deploymentHandler.GetReleasesHandler)
 	apiRouter.POST("/apps/domain/new", deploymentHandler.AddDomainHandler)
+	apiRouter.GET("/apps/resource/dump/:appName", resourcesDeploymentHandler.DumpDatabaseHandler)
 	apiRouter.DELETE("/apps/domain/remove", deploymentHandler.RemoveDomainHandler)
 	apiRouter.POST("/apps/use", apiHandler.UseAppHandler)
 	apiRouter.GET("/status", apiHandler.StatusHandler)
 
-
 	router.Static("/css", "./frontend/css")
 	router.Static("/f2/css", "./frontend/f2/css")
 	// HTML
+	router.GET("/", rd.RenderIndex)
 	router.GET("/login", rd.RenderLogin)
 	router.GET("/signup", rd.SignUp)
 	router.GET("/reset", rd.ForgotPassword)
@@ -127,24 +136,16 @@ func NewServer(addr string) (*Server, error) {
 	}, nil
 }
 
-func createK8sClient() (*kubernetes.Clientset, dynamic.Interface, error) {
+func createK8sClient() (*rest.Config, error) {
 	k8sConfigPath := ""
 	if k8sConfigPath = os.Getenv("K8S_CONFIG_DIR"); k8sConfigPath == "" {
 		k8sConfigPath = filepath.Join(os.Getenv("HOME"), ".kube", "config")
 	}
 	c, err := clientcmd.BuildConfigFromFlags("", k8sConfigPath)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	k8sClient, err := kubernetes.NewForConfig(c)
-	if err != nil {
-		return nil, nil, err
-	}
-	dy, err := dynamic.NewForConfig(c)
-	if err != nil {
-		return nil, nil, err
-	}
-	return k8sClient, dy, nil
+	return c, nil
 }
 
 func createDockerService(cfg *config.Config) (services.DockerService, error) {

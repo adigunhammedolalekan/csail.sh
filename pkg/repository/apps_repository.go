@@ -16,7 +16,7 @@ var ErrAppDataRetrieveFailed = errors.New("failed to retrieve app data. Please r
 var ErrDomainNotFound = errors.New("domain not found")
 var ErrDomainExists = errors.New("domain already exists in the system")
 
-//go:generate mockgen -destination=mocks/apps_repository_mock.go -package=mocks github.com/saas/hostgolang/pkg/repository AppsRepository
+//go:generate mockgen -destination=../mocks/apps_repository_mock.go -package=mocks github.com/saas/hostgolang/pkg/repository AppsRepository
 type AppsRepository interface {
 	CreateApp(name, plan string, accountId uint) (*types.App, error)
 	GetApp(name string) (*types.App, error)
@@ -33,13 +33,13 @@ type AppsRepository interface {
 	GetDomainByAppId(appId uint) (*types.Domain, error)
 	CreateDomain(appId uint, address string) (*types.Domain, error)
 	RemoveDomain(appId uint, address string) error
+	PodExec(appName, resName string, cmds []string) (string, error)
 }
 
 type appsRepository struct {
-	db      *gorm.DB
-	nameGen namegenerator.Generator
-	ks8     services.K8sService
-	gitService services.GitService
+	db         *gorm.DB
+	nameGen    namegenerator.Generator
+	ks8        services.K8sService
 }
 
 func (a *appsRepository) GetAccountApps(accountId uint) ([]types.App, error) {
@@ -257,7 +257,11 @@ func (a *appsRepository) RemoveDomain(appId uint, address string) error {
 	return nil
 }
 
+func (a *appsRepository) PodExec(appName, resName string, cmds []string) (string, error) {
+	return a.ks8.PodExec(appName, resName, cmds)
+}
+
 func NewAppsRepository(db *gorm.DB, nameGenerator namegenerator.Generator,
-	k8s services.K8sService, gitService services.GitService) AppsRepository {
-	return &appsRepository{db: db, nameGen: nameGenerator, ks8: k8s, gitService: gitService}
+	k8s services.K8sService) AppsRepository {
+	return &appsRepository{db: db, nameGen: nameGenerator, ks8: k8s,}
 }

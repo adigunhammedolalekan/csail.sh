@@ -11,13 +11,9 @@ import (
 	proxy "github.com/saas/hostgolang/pkg/proxyclient"
 	"github.com/saas/hostgolang/pkg/services"
 	"github.com/saas/hostgolang/pkg/types"
-	"gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing/transport/http"
 	"io"
 	"io/ioutil"
 	"log"
-	"os"
-	"path/filepath"
 )
 
 var ErrCreateImage = errors.New("failed to create docker image for app. Please contact support")
@@ -29,10 +25,9 @@ var ErrReleaseNotFound = errors.New("release not found")
 var ErrNoDockerFile = errors.New("no Dockerfile found in this git repository")
 
 const tempClonePath = "/tmp/git"
-
+//go:generate mockgen -destination=../mocks/deployment_repository_mock.go -package=mocks github.com/saas/hostgolang/pkg/repository DeploymentRepository
 type DeploymentRepository interface {
 	CreateDeployment(app *types.App, reader io.Reader) (*types.DeploymentResult, error)
-	CreateGitDeployment(app *types.App, info *types.HookInfo) (*types.DeploymentResult, error)
 	CreateDockerDeployment(app *types.App, dockerUrl string) (*types.DeploymentResult, error)
 	UpdateEnvironmentVars(app *types.App, envs []types.Environment) error
 	GetApplicationLogs(appName string) (string, error)
@@ -43,17 +38,17 @@ type DeploymentRepository interface {
 	GetDeploymentSettings(appId uint) (*types.DeploymentSettings, error)
 	RollbackDeployment(appId uint, version string) (*types.DeploymentResult, error)
 	GetReleases(appId uint) ([]types.Release, error)
+	HasRegistryAuthorization(req *types.AuthorizationRequest) ([]string, error)
 }
 
 type defaultDeploymentRepository struct {
-	db      *gorm.DB
-	docker  services.DockerService
-	k8s     services.K8sService
-	proxy   proxy.Client
-	appRepo AppsRepository
-	storage services.StorageClient
-	cfg *config.Config
-	gitService services.GitService
+	db         *gorm.DB
+	docker     services.DockerService
+	k8s        services.K8sService
+	proxy      proxy.Client
+	appRepo    AppsRepository
+	storage    services.StorageClient
+	cfg        *config.Config
 }
 
 func (d *defaultDeploymentRepository) CreateDeployment(app *types.App, reader io.Reader) (*types.DeploymentResult, error) {
@@ -175,7 +170,6 @@ func (d *defaultDeploymentRepository) CreateDockerDeployment(app *types.App, doc
 		log.Println("failed to create deployment settings: ", err)
 	}
 	rs, err := d.GetRelease(app.ID)
-	log.Println(rs, err)
 	if err == nil {
 		result.Version = fmt.Sprintf("v%d", rs.VersionNumber)
 	}
@@ -350,91 +344,23 @@ func (d *defaultDeploymentRepository) RollbackDeployment(appId uint, version str
 	return result, nil
 }
 
-func (d *defaultDeploymentRepository) CreateGitDeployment(app *types.App, info *types.HookInfo) (*types.DeploymentResult, error) {
-	dir := filepath.Join(tempClonePath, info.RepoName)
-	if err := os.RemoveAll(dir); err != nil {
-		return nil, err
-	}
-	cloneUrl := fmt.Sprintf("%s/%s", d.cfg.GitServerUrl, info.RepoName)
-	_, err := git.PlainClone(dir, true, &git.CloneOptions{
-		URL:               cloneUrl,
-		Auth:              &http.BasicAuth{Username: os.Getenv("MASTER_PASSWORD"), Password: os.Getenv("MASTER_PASSWORD")},
-	})
-	if err != nil {
-		log.Println("failed to clone repo: ", err)
-		return nil, ErrDeploymentFailed
-	}
-	d.gitService.WriteNotification(info.NotificationKey, fmt.Sprintf("building docker image for %s...", app.AppName))
-	dockerUrl, err := d.docker.BuildImageFromGitRepository(context.Background(), dir, app.AppName)
-	if err != nil {
-		log.Println("failed to build image from git repo: ", err)
-		return nil, ErrCreateImage
-	}
-	d.gitService.WriteNotification(info.NotificationKey, "pushing image to remote repository...")
-	if err := d.docker.PushImage(context.Background(), dockerUrl); err != nil {
-		log.Println("failed to push image: ", err)
-		return nil, ErrPushImage
-	}
-	appName := app.AppName
-	var replicas uint = 1
-	settings, err := d.GetDeploymentSettings(app.ID)
-	if err == nil {
-		replicas = settings.Replicas
-	}
-	envs, _ := d.appRepo.GetEnvironmentVars(appName)
-	m := make(map[string]string, 0)
-	if envs != nil && len(envs) > 0 {
-		for _, e := range envs {
-			m[e.EnvKey] = e.EnvValue
-		}
-	}
-	settings.Plan = &types.Plan{
-		Name:  "Test",
-		Alias: "t1",
-		Price: 0,
-		Info:  types.PlanInfo{
-			Memory: 0.1, Cpu: 0.1,
-		},
-	}
-	opt := &types.CreateDeploymentOpts{
-		Envs:     m,
-		Name:     appName,
-		Replicas: int32(replicas),
-		Tag:      dockerUrl,
-		IsLocal:  true,
-		Memory:   settings.Plan.Info.Memory,
-		Cpu:      settings.Plan.Info.Cpu,
-	}
-	d.gitService.WriteNotification(info.NotificationKey, "creating deployment...")
-	result, err := d.k8s.DeployService(opt)
-	if err != nil {
-		log.Println("failed to deploy service: ", err)
-		return nil, ErrDeploymentFailed
-	}
-	if err := d.proxy.Set(appName, result.Address); err != nil {
-		log.Println("failed to contact proxy server: ", err)
-		return nil, ErrDeploymentFailed
-	}
-	d.gitService.WriteNotification(info.NotificationKey, "deployment updated!")
-	d.gitService.WriteNotification(info.NotificationKey, "=====")
-	d.gitService.WriteNotification(info.NotificationKey, fmt.Sprintf("https://%s.hostgoapp.com", app.AppName))
-	d.gitService.WriteNotification(info.NotificationKey, "=====")
-	d.gitService.WriteNotification(info.NotificationKey, "...Done")
-	return result, nil
+func (d *defaultDeploymentRepository) HasRegistryAuthorization(req *types.AuthorizationRequest) ([]string, error) {
+	return []string{
+		"push", "pull",
+	}, nil
 }
 
 func NewDeploymentRepository(db *gorm.DB, docker services.DockerService,
 	k8s services.K8sService, pr proxy.Client,
 	appRepo AppsRepository, storage services.StorageClient,
-	cfg *config.Config, gitService services.GitService) DeploymentRepository {
+	cfg *config.Config) DeploymentRepository {
 	return &defaultDeploymentRepository{
-		db:      db,
-		docker:  docker,
-		k8s:     k8s,
-		proxy:   pr,
-		appRepo: appRepo,
-		storage: storage,
-		cfg: cfg,
-		gitService: gitService,
+		db:         db,
+		docker:     docker,
+		k8s:        k8s,
+		proxy:      pr,
+		appRepo:    appRepo,
+		storage:    storage,
+		cfg:        cfg,
 	}
 }

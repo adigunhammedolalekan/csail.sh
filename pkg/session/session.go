@@ -6,7 +6,7 @@ import (
 	"github.com/saas/hostgolang/pkg/types"
 )
 
-//go:generate mockgen -destination=mocks/session_store.go -package=mocks github.com/saas/hostgolang/pkg/session Store
+//go:generate mockgen -destination=../mocks/session_store.go -package=mocks github.com/saas/hostgolang/pkg/session Store
 type Store interface {
 	Put(token string, account *types.Account) error
 	Get(token string) (*types.Account, error)

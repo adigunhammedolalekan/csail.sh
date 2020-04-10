@@ -16,6 +16,7 @@ var ErrEncodeDecode = errors.New("failed to decode/encode config application con
 var ErrDataNotFound = errors.New("record not found")
 var ErrPersistData = errors.New("failed to persist application data")
 
+//go:generate mockgen -destination=../mocks/storage_client_mock.go -package=mocks github.com/saas/hostgolang/pkg/services StorageClient
 type StorageClient interface {
 	Put(key string, data []byte) error
 	Get(key string) (io.Reader, error)

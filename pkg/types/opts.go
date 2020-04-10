@@ -33,17 +33,25 @@ type DeployResourcesOpt struct {
 	Memory      float64 `json:"memory"`
 	Cpu         float64 `json:"cpu"`
 	StorageSize float64 `json:"storage_size"`
-	Local bool
+	Local       bool
 }
 
-
 type HookInfo struct {
-	RepoName string `json:"repo_name"`
-	RepoPath string `json:"repo_path"`
-	OldRev   string `json:"old_rev"`
-	NewRev   string `json:"new_rev"`
-	Ref      string `json:"ref"`
-	RefType  string `json:"ref_type"`
-	RefName  string `json:"ref_name"`
-	NotificationKey   string `json:"notification_key"`
+	RepoName        string `json:"repo_name"`
+	RepoPath        string `json:"repo_path"`
+	OldRev          string `json:"old_rev"`
+	NewRev          string `json:"new_rev"`
+	Ref             string `json:"ref"`
+	RefType         string `json:"ref_type"`
+	RefName         string `json:"ref_name"`
+	NotificationKey string `json:"notification_key"`
+}
+
+type AuthorizationRequest struct {
+	Account string   `json:"account"`
+	Service string   `json:"service"`
+	Type    string   `json:"type"`
+	Name    string   `json:"name"`
+	IP      string   `json:"ip"`
+	Actions []string `json:"actions"`
 }

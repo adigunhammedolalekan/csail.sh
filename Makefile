@@ -4,6 +4,10 @@ build:
 compile:
 	export GOOS=linux && go build -o hostgolang cmd/cmd.go
 
+test:
+	go generate ./...
+	go test ./...
+
 kube-deploy:
 	kubectl apply -f k8s/secrets.yml
 	kubectl apply -f k8s/configs.yml
@@ -22,6 +26,7 @@ kube-local:
 	kubectl apply -f k8s/local/services.yml
 	kubectl apply -f k8s/local/statefulsets.yml
 	kubectl apply -f k8s/local/deployments.yml
+	kubectl apply -f k8s/local/tls.yml
 	kubectl apply -f k8s/local/ingress.yml
 
 ingress:

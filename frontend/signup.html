@@ -2,7 +2,7 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="x-ua-compatible" content="ie=edge">
-        <title>Pulumi</title>
+        <title>csail.sh | Create Account</title>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">  
         
@@ -28,12 +28,9 @@
 
             <div class="formarea">
                 <span class="formdesc">Sign Up with your Email:</span>
-                <form action="self" enctype="multipart/form-data">
+                <form action="/signup" method="post">
                  <div class="inp">
                     <input type="text" placeholder="Full Name*" required/>
-                </div>
-                 <div class="inp">
-                    <input type="text" placeholder="Username*" required/>
                 </div>
                     <div class="inp">
                     <input type="email" placeholder="Email Address or Username*" required/>
@@ -48,13 +45,11 @@
                     
                 </form>
                 <ul class="formlinks">
-                   
-                    <li class="onlyhim"><a href="login.html">Already have an account</a></li>
+                    <li class="onlyhim"><a href="/login">Already have an account?</a></li>
                 </ul> 
                 <button class="btn backbtn block mt-4 md:mt-0 md:text-xs lg:text-sm btn btn-orange-translucent">
                     SIGNUP WITH GITHUB
                 </button>
-               
 
             </div>
         </div>

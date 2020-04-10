@@ -1,6 +1,7 @@
 package services
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -11,7 +12,11 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/remotecommand"
 	"k8s.io/client-go/util/retry"
+	"net/http"
+	"os"
 
 	"github.com/saas/hostgolang/pkg/config"
 	"io/ioutil"
@@ -32,7 +37,7 @@ const registrySecretName = "storm-secret"
 const validPortRange = 65535
 const letsEncryptProd = "https://acme-v02.api.letsencrypt.org/directory"
 
-//go:generate mockgen -destination=mocks/k8s_service_mock.go -package=mocks github.com/saas/hostgolang/pkg/services K8sService
+//go:generate mockgen -destination=../mocks/k8s_service_mock.go -package=mocks github.com/saas/hostgolang/pkg/services K8sService
 type K8sService interface {
 	DeployService(opt *types.CreateDeploymentOpts) (*types.DeploymentResult, error)
 	GetLogs(appName string) (string, error)
@@ -41,16 +46,19 @@ type K8sService interface {
 	ListRunningPods(appName string) ([]types.Instance, error)
 	AddDomain(appName, domain string) error
 	RemoveDomain(appName, domain string) error
+	PodExec(appName, resName string, cmds []string) (string, error)
 }
 
 type defaultK8sService struct {
 	client *kubernetes.Clientset
-	dy dynamic.Interface
+	dy     dynamic.Interface
 	cfg    *config.Config
+	restConfig *rest.Config
 }
 
-func NewK8sService(client *kubernetes.Clientset, dy dynamic.Interface, config *config.Config) K8sService {
-	d := &defaultK8sService{client: client, cfg: config, dy: dy}
+func NewK8sService(client *kubernetes.Clientset, dy dynamic.Interface,
+	config *config.Config, restConfig *rest.Config) K8sService {
+	d := &defaultK8sService{client: client, cfg: config, dy: dy, restConfig: restConfig}
 	if err := d.createNameSpace(); err != nil {
 		log.Println("Error occurred while creating namespace: ", err)
 	}
@@ -209,11 +217,11 @@ func (d *defaultK8sService) createService(serviceName string, serviceType v1.Ser
 }
 
 func (d *defaultK8sService) createDeployment(tag, name string, envs, labels map[string]string, ports []v1.ServicePort, replicas int32, mem, vCpu float64) error {
-	cpu, err := resource.ParseQuantity(fmt.Sprintf("%fm", vCpu * 1000))
+	cpu, err := resource.ParseQuantity(fmt.Sprintf("%fm", vCpu*1000))
 	if err != nil {
 		return err
 	}
-	memory, err := resource.ParseQuantity(fmt.Sprintf("%fMi", mem * 1000))
+	memory, err := resource.ParseQuantity(fmt.Sprintf("%fMi", mem*1000))
 	if err != nil {
 		return err
 	}
@@ -393,9 +401,9 @@ func (d *defaultK8sService) createIngress(appName, domain string) error {
 	ingress := &v1beta1.Ingress{}
 	ingress.Name = ingressName
 	ingress.Annotations = map[string]string{
-		"kubernetes.io/ingress.class": "nginx",
+		"kubernetes.io/ingress.class":                 "nginx",
 		"nginx.ingress.kubernetes.io/proxy-body-size": "10000m",
-		"cert-manager.io/cluster-issuer": issuerName,
+		"cert-manager.io/cluster-issuer":              issuerName,
 	}
 
 	ports := svc.Spec.Ports
@@ -431,21 +439,21 @@ func (d *defaultK8sService) provisionCertificate(appName, domain string) error {
 	certIssuer := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "cert-manager.io/v1alpha2",
-			"kind": "ClusterIssuer",
+			"kind":       "ClusterIssuer",
 			"metadata": map[string]interface{}{
-				"name": issuerName,
+				"name":      issuerName,
 				"namespace": ns,
 			},
-			"spec": map[string]interface{} {
-				"acme": map[string]interface{} {
-					"email" : "adigunhammed.lekan@gmail.com",
+			"spec": map[string]interface{}{
+				"acme": map[string]interface{}{
+					"email":  "adigunhammed.lekan@gmail.com",
 					"server": letsEncryptProd,
-					"privateKeySecretRef": map[string]interface{} {
+					"privateKeySecretRef": map[string]interface{}{
 						"name": secretName,
 					},
-					"solvers": []map[string]interface{} {
-						{"http01": map[string] interface{} {
-							"ingress": map[string]interface{} {
+					"solvers": []map[string]interface{}{
+						{"http01": map[string]interface{}{
+							"ingress": map[string]interface{}{
 								"class": "nginx",
 							},
 						}},
@@ -471,19 +479,19 @@ func (d *defaultK8sService) createCertificate(issuerName, appName, domain string
 	cert := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "cert-manager.io/v1alpha2",
-			"kind": "Certificate",
-			"metadata": map[string]interface{} {
-				"name": name,
+			"kind":       "Certificate",
+			"metadata": map[string]interface{}{
+				"name":      name,
 				"namespace": ns,
 			},
-			"spec": map[string]interface{} {
+			"spec": map[string]interface{}{
 				"secretName": secretName,
-				"issuerRef": map[string]interface{} {
+				"issuerRef": map[string]interface{}{
 					"name": issuerName,
 					"kind": "ClusterIssuer",
 				},
 				"commonName": domain,
-				"dnsNames": []string{domain},
+				"dnsNames":   []string{domain},
 			},
 		},
 	}
@@ -539,8 +547,7 @@ func findPort() int {
 	if err != nil {
 		return port
 	}
-	if err := conn.Close(); err != nil { /*no-op*/
-	}
+	if err := conn.Close(); err != nil { /*no-op*/}
 	return findPort()
 }
 
@@ -555,3 +562,54 @@ func truncString(s string) string {
 	return strings.TrimSpace(s[0:14])
 }
 
+func (d *defaultK8sService) PodExec(appName, resName string, cmds []string) (string, error) {
+	log.Printf("Execing command for App=%s, Res=%s, Cmds=%s", appName, resName, cmds)
+	selector := fmt.Sprintf("res=svc-%s-%s", resName, appName)
+	pods, err := d.getPodsBySelector(selector)
+	if err != nil {
+		return "", err
+	}
+	if len(pods) <= 0 {
+		return "", errors.New("no pod found")
+	}
+	pod := pods[0]
+	containers := pod.Spec.Containers
+	container := ""
+	if len(containers) > 0 {
+		container = containers[0].Name
+	}
+	log.Printf("Pod=%s <==> Container=%s", pod.Name, container)
+	c := d.client.CoreV1().RESTClient()
+
+	req := c.Post().
+		Namespace(pod.Namespace).
+		Resource("pods").
+		Name(pod.Name).
+		SubResource("exec").
+		Param("container", container).
+		Param("stdout", "true").
+		Param("stderr", "true")
+
+	for _, cmd := range cmds {
+		req.Param("command", cmd)
+	}
+
+	executor, err := remotecommand.NewSPDYExecutor(d.restConfig, http.MethodPost, req.URL())
+	if err != nil {
+		return "", err
+	}
+	out := &bytes.Buffer{}
+	os.Stdout.Sync()
+	os.Stderr.Sync()
+	err = executor.Stream(remotecommand.StreamOptions{
+		Stdin:              nil,
+		Stdout:             out,
+		Stderr:             os.Stderr,
+		Tty:                false,
+		TerminalSizeQueue:  nil,
+	})
+	if err != nil {
+		return "", err
+	}
+	return out.String(), nil
+}

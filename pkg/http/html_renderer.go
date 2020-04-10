@@ -5,7 +5,8 @@ import (
 	"net/http"
 )
 
-type HtmlRenderer struct {}
+type HtmlRenderer struct{}
+
 func NewHtmlRenderer() *HtmlRenderer {
 	return &HtmlRenderer{}
 }
@@ -16,6 +17,10 @@ func (r *HtmlRenderer) RenderLogin(ctx *gin.Context) {
 
 func (r *HtmlRenderer) SignUp(ctx *gin.Context) {
 	ctx.HTML(http.StatusOK, "signup.html", nil)
+}
+
+func (r *HtmlRenderer) RenderIndex(ctx *gin.Context) {
+	ctx.HTML(http.StatusOK, "index.html", nil)
 }
 
 func (r *HtmlRenderer) ForgotPassword(ctx *gin.Context) {

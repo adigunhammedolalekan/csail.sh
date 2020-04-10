@@ -15,10 +15,10 @@ type Quota struct {
 }
 
 type genericResource struct {
-	port int
+	port                     int
 	memory, cpu, storageSize float64
 	envs                     map[string]string
-	name, image string
+	name, image              string
 }
 
 func NewGenericResource(mem, cpu, ss float64, envs map[string]string, port int, name, image string) Res {
@@ -28,7 +28,7 @@ func NewGenericResource(mem, cpu, ss float64, envs map[string]string, port int, 
 		cpu:         cpu,
 		storageSize: ss,
 		envs:        envs,
-		name: name, image: image,
+		name:        name, image: image,
 	}
 }
 

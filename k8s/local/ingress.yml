@@ -31,7 +31,7 @@ spec:
       http:
         paths:
           - backend:
-              serviceName: echo-service
+              serviceName: app-service
               servicePort: 4005
     - host: "*.csail.app"
       http:
@@ -40,5 +40,5 @@ spec:
               serviceName: proxy-service
               servicePort: 9093
   backend:
-    serviceName: echo-service
-    servicePort: 5678
+    serviceName: app-service
+    servicePort: 4005

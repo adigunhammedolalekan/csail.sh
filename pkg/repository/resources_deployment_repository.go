@@ -13,16 +13,19 @@ import (
 	"github.com/saas/hostgolang/pkg/res/pg"
 	"github.com/saas/hostgolang/pkg/services"
 	"github.com/saas/hostgolang/pkg/types"
+	"io"
 	"log"
 	"strings"
 )
 
 var ErrProvisionResource = errors.New("failed to provision resource")
-
+//go:generate mockgen -destination=../mocks/resource_deployment_repository_mock.go -package=mocks github.com/saas/hostgolang/pkg/repository ResourcesDeployment
 type ResourcesDeployment interface {
 	DeployResource(opt *types.DeployResourcesOpt) (*types.ResourceDeploymentResult, error)
 	GetResource(appId uint, resName string) (*types.Resource, error)
 	DeleteResource(app *types.App, resId uint, resName string) error
+	DumpDatabase(app *types.App, resName string) (io.Reader, error)
+	GetResourceEnvs(appId, resId uint) ([]types.ResourceEnv, error)
 }
 
 type defaultResourcesDeploymentRepo struct {
@@ -57,19 +60,19 @@ func (d *defaultResourcesDeploymentRepo) DeployResource(opt *types.DeployResourc
 		username, password, dbName := key, d.reverseMd5(key), key[:20]
 		dataPath := fmt.Sprintf("/var/lib/postgresl/data/pg-%s", app.AppName)
 		m := map[string]string{
-			"POSTGRES_USER": username,
+			"POSTGRES_USER":     username,
 			"POSTGRES_PASSWORD": password,
-			"POSTGRES_DB": dbName,
-			"PG_DATA": dataPath,
+			"POSTGRES_DB":       dbName,
+			"PG_DATA":           dataPath,
 		}
 		r = pg.Postgres(opt.Memory, opt.Cpu, opt.StorageSize, m)
 	case "mysql":
 		key := fn.GenerateRandomString(50)
 		username, password, dbName := key, d.reverseMd5(key), key[:20]
 		m := map[string]string{
-			"MYSQL_USER": username,
-			"MYSQL_PASSWORD": password,
-			"MYSQL_DATABASE": dbName,
+			"MYSQL_USER":          username,
+			"MYSQL_PASSWORD":      password,
+			"MYSQL_DATABASE":      dbName,
 			"MYSQL_ROOT_PASSWORD": password,
 		}
 		r = mysql.NewMysql(opt.Memory, opt.Cpu, opt.StorageSize, m)
@@ -102,17 +105,24 @@ func (d *defaultResourcesDeploymentRepo) DeployResource(opt *types.DeployResourc
 	}
 	envs := make([]types.ResourceEnv, 0)
 	for k, v := range r.Envs() {
-		rEnv := types.NewEnvVariable(app.ID, resource.ID , k, v)
-		if err := tx.Create(rEnv).Error; err != nil {
+		env := types.NewEnvVariable(app.ID, resource.ID, k, v)
+		if err := tx.Create(env).Error; err != nil {
 			tx.Rollback()
 			return nil, ErrProvisionResource
 		}
-		envs = append(envs, *types.NewResourceEnv(resource.ID, rEnv.EnvKey, rEnv.EnvValue))
+		resourceEnv := types.NewResourceEnv(resource.ID, env.EnvKey, env.EnvValue)
+		if err := tx.Create(resourceEnv).Error; err != nil {
+			tx.Rollback()
+			return nil, ErrProvisionResource
+		}
+		envs = append(envs, *resourceEnv)
 	}
+
 	if err := tx.Commit().Error; err != nil {
 		return nil, ErrProvisionResource
 	}
-	result, err := d.k8s.DeployResource(app, envs, r, true)
+	appEnvs, _ := d.appRepo.GetEnvironmentVars(app.AppName)
+	result, err := d.k8s.DeployResource(app, envs, appEnvs, r, true)
 	if err != nil {
 		return nil, err
 	}
@@ -146,6 +156,43 @@ func (d *defaultResourcesDeploymentRepo) DeleteResource(app *types.App, resId ui
 		return err
 	}
 	return d.db.Table("resources").Where("app_id = ? AND name = ?", app.ID, resName).Delete(&types.Resource{}).Error
+}
+
+func (d *defaultResourcesDeploymentRepo) DumpDatabase(app *types.App, resName string) (io.Reader, error) {
+	r, err := d.GetResource(app.ID, resName)
+	if err != nil {
+		return nil, err
+	}
+	envs, err := d.GetResourceEnvs(app.ID, r.ID)
+	if err != nil {
+		return nil, err
+	}
+	cmds := make([]string, 0)
+	switch resName {
+	case "pg":
+		cmds = append(cmds, "pg_dump", "-U")
+		for _, e := range envs {
+			if e.EnvKey == "POSTGRES_USER" {
+				cmds = append(cmds, e.EnvValue)
+			}
+			if e.EnvKey == "POSTGRES_DB" {
+				cmds = append(cmds, e.EnvValue)
+			}
+		}
+		return d.k8s.Exec(app.AppName, "pg", cmds)
+	default:
+		return nil, errors.New("not yet implemented")
+	}
+}
+
+func (d *defaultResourcesDeploymentRepo) GetResourceEnvs(appId, resId uint) ([]types.ResourceEnv, error) {
+	data := make([]types.ResourceEnv, 0)
+	err := d.db.Table("resource_envs").Where("resource_id = ?", resId).Find(&data).Error
+	if err != nil {
+		return nil, err
+	}
+	log.Println(data)
+	return data, nil
 }
 
 func (d *defaultResourcesDeploymentRepo) updateHostEnvConfig(appId, resId uint, key, hostIp string) error {

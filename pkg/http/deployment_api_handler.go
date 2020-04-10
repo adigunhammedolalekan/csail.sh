@@ -9,7 +9,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 )
 
 type DeploymentHandler struct {
@@ -65,8 +64,8 @@ func (handler *DeploymentHandler) CreateDockerDeployment(ctx *gin.Context) {
 	if account == nil {
 		return
 	}
-	var request struct{
-		AppName string `json:"app_name"`
+	var request struct {
+		AppName   string `json:"app_name"`
 		DockerUrl string `json:"docker_url"`
 	}
 	if err := ctx.ShouldBindJSON(&request); err != nil {
@@ -85,30 +84,6 @@ func (handler *DeploymentHandler) CreateDockerDeployment(ctx *gin.Context) {
 	r, err := handler.repo.CreateDockerDeployment(app, request.DockerUrl)
 	if err != nil {
 		InternalServerErrorResponse(ctx, err.Error())
-		return
-	}
-	ctx.JSON(http.StatusOK, &SuccessResponse{Error: false, Message: "success", Data: r})
-}
-
-func (handler *DeploymentHandler) CreateGitDeploymentHandler(ctx *gin.Context) {
-	hookInfo := &types.HookInfo{}
-	if err := ctx.ShouldBindJSON(hookInfo); err != nil {
-		BadRequestResponse(ctx, "hook data is missing")
-		return
-	}
-	appName := hookInfo.RepoName
-	s := strings.Split(hookInfo.RepoName, ".")
-	if len(s) == 2 {
-		appName = s[0]
-	}
-	app, err := handler.appRepo.GetApp(appName)
-	if err != nil {
-		BadRequestResponse(ctx, "app not found")
-		return
-	}
-	r, err := handler.repo.CreateGitDeployment(app, hookInfo)
-	if err != nil {
-		InternalServerErrorResponse(ctx, "deployment failed: " + err.Error())
 		return
 	}
 	ctx.JSON(http.StatusOK, &SuccessResponse{Error: false, Message: "success", Data: r})
@@ -317,7 +292,7 @@ func (handler *DeploymentHandler) AddDomainHandler(ctx *gin.Context) {
 	}
 	var request struct {
 		AppName string `json:"app_name"`
-		Domain string `json:"domain"`
+		Domain  string `json:"domain"`
 	}
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		BadRequestResponse(ctx, "bad request: malformed request's body")
@@ -347,7 +322,7 @@ func (handler *DeploymentHandler) RemoveDomainHandler(ctx *gin.Context) {
 	}
 	var request struct {
 		AppName string `json:"app_name"`
-		Domain string `json:"domain"`
+		Domain  string `json:"domain"`
 	}
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		BadRequestResponse(ctx, "bad request: malformed request's body")

@@ -28,7 +28,7 @@ WORKDIR /app
 RUN chmod +x /app/%s
 ENTRYPOINT [ "/app/%s" ]`
 
-//go:generate mockgen -destination=mocks/docker_service_mock.go -package=mocks github.com/saas/hostgolang/pkg/services DockerService
+//go:generate mockgen -destination=../mocks/docker_service_mock.go -package=mocks github.com/saas/hostgolang/pkg/services DockerService
 type DockerService interface {
 	BuildImage(ctx context.Context, buildDir, name string, r io.Reader) (string, error)
 	BuildImageFromGitRepository(ctx context.Context, dir, name string) (string, error)

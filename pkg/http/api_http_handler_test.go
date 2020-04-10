@@ -7,9 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
 	"github.com/jinzhu/gorm"
-	"github.com/saas/hostgolang/pkg/repository/mocks"
-	sessionMock "github.com/saas/hostgolang/pkg/session/mocks"
+	"github.com/saas/hostgolang/pkg/mocks"
 	"github.com/saas/hostgolang/pkg/types"
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -49,13 +49,12 @@ func TestApiHandler_CreateAccountHandler(t *testing.T) {
 	}
 
 	accountRepo := mocks.NewMockAccountRepository(controller)
-	sessionStore := sessionMock.NewMockStore(controller)
+	sessionStore := mocks.NewMockStore(controller)
 	handler := NewApiHandler(nil, accountRepo, sessionStore)
-
 	accountRepo.EXPECT().CreateAccount(mockOpt).Return(mockAccount, nil)
 
 	buf := &bytes.Buffer{}
-	if err := json.NewEncoder(buf).Encode(mockAccount); err != nil {
+	if err := json.NewEncoder(buf).Encode(mockOpt); err != nil {
 		t.Fatal(err)
 	}
 	w := httptest.NewRecorder()
@@ -66,6 +65,7 @@ func TestApiHandler_CreateAccountHandler(t *testing.T) {
 	if got, want := w.Code, http.StatusOK; got != want {
 		t.Fatalf("expected http code %d; got %d", want, got)
 	}
+	assert.Equal(t, w.Code, http.StatusOK, "expected code does not match")
 }
 
 func TestCreateAccountHandlerBadInput(t *testing.T) {
@@ -131,16 +131,16 @@ func TestApiHandler_CreateAppHandler(t *testing.T) {
 
 	name := "testApp"
 	appRepo := mocks.NewMockAppsRepository(controller)
-	sessionStore := sessionMock.NewMockStore(controller)
+	sessionStore := mocks.NewMockStore(controller)
 	sessionStore.EXPECT().Get("testUser").Return(mockAccount, nil)
-	appRepo.EXPECT().CreateApp(name, mockAccount.ID).Return(mockApp, nil)
+	appRepo.EXPECT().CreateApp(name, "SR", mockAccount.ID).Return(mockApp, nil)
 
 	handler := NewApiHandler(appRepo, nil, sessionStore)
 	w := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(w)
 	req := httptest.NewRequest("POST", "/me/apps", nil)
 	req.Header.Set(tokenHeaderName, "testUser")
-	req.URL.RawQuery += "&name=" + name
+	req.URL.RawQuery += "&name=" + name + "&plan=" + "SR"
 	ctx.Request = req
 
 	handler.CreateAppHandler(ctx)
@@ -155,7 +155,7 @@ func TestApiHandler_CreateAppHandlerAuthError(t *testing.T) {
 
 	name := "testApp"
 	appRepo := mocks.NewMockAppsRepository(controller)
-	sessionStore := sessionMock.NewMockStore(controller)
+	sessionStore := mocks.NewMockStore(controller)
 	sessionStore.EXPECT().Get("testUser").Return(nil, errors.New("account data not found"))
 
 	handler := NewApiHandler(appRepo, nil, sessionStore)

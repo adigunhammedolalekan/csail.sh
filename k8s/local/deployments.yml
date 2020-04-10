@@ -31,6 +31,8 @@ spec:
               value: tcp://localhost:2375
             - name: JWT_SECRET
               value: jwt$ecre7
+            - name: PROXY_SECRET
+              value: s3cret
           imagePullPolicy: Always
         - name: docker-container
           image: docker:18.05-dind
@@ -81,6 +83,8 @@ spec:
           env:
             - name: REDIS_HOST
               value: proxy-redis-service:6379
+            - name: PROXY_SECRET
+              value: s3cret
       imagePullSecrets:
         - name: hostgo-secret
     metadata:

@@ -44,4 +44,3 @@ func Postgres(mem, cpu, ss float64, envs map[string]string) res.Res {
 		memory: mem, cpu: cpu, storageSize: ss, envs: envs,
 	}
 }
-

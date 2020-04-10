@@ -2,7 +2,7 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="x-ua-compatible" content="ie=edge">
-        <title>Pulumi</title>
+        <title>csail.sh | Sign In</title>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">  
         
@@ -27,7 +27,7 @@
 
             <div class="formarea">
                 <span class="formdesc">Sign in with your email address or password</span>
-                <form action="self" enctype="multipart/form-data">
+                <form action="/authenticate" method="post">
                     <div class="inp">
                     <input type="email" placeholder="Email Address or Username*" required/>
                 </div>
@@ -41,8 +41,8 @@
                 </form> 
                 <button class="btn backbtn block mt-4 md:mt-0 md:text-xs lg:text-sm btn btn-orange-translucent">SIGNIN WITH GITHUB</button>
                 <ul class="formlinks">
-                    <li><a href="reset.html">Forgot password</a></li>
-                    <li><a href="signup.html">Don't have an account</a></li>
+                    <li><a href="/reset">Forgot password</a></li>
+                    <li><a href="/account/new">Don't have an account</a></li>
                 </ul>
 
             </div>
