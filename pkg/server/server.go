@@ -96,7 +96,6 @@ func NewServer(addr string) (*Server, error) {
 		proxyClient, appRepo, storageClient, cfg)
 	resourceRepo := repository.NewResourcesDeploymentRepository(db, appRepo, accountRepo, resourseK8sClient)
 
-	rd := http.NewHtmlRenderer()
 	apiHandler := http.NewApiHandler(appRepo, accountRepo, sessionStore)
 	deploymentHandler := http.NewDeploymentHandler(deploymentRepo, appRepo, sessionStore)
 	resourcesDeploymentHandler := http.NewResourcesDeploymentHandler(resourceRepo, appRepo, sessionStore)
@@ -123,14 +122,6 @@ func NewServer(addr string) (*Server, error) {
 	apiRouter.DELETE("/apps/domain/remove", deploymentHandler.RemoveDomainHandler)
 	apiRouter.POST("/apps/use", apiHandler.UseAppHandler)
 	apiRouter.GET("/status", apiHandler.StatusHandler)
-
-	router.Static("/css", "./frontend/css")
-	router.Static("/f2/css", "./frontend/f2/css")
-	// HTML
-	router.GET("/", rd.RenderIndex)
-	router.GET("/login", rd.RenderLogin)
-	router.GET("/signup", rd.SignUp)
-	router.GET("/reset", rd.ForgotPassword)
 	return &Server{
 		addr:   addr,
 		router: router,
@@ -158,7 +149,6 @@ func createDockerService(cfg *config.Config) (services.DockerService, error) {
 }
 
 func (s *Server) Run() error {
-	s.router.LoadHTMLGlob("frontend/*.html")
 	if err := s.router.Run(s.addr); err != nil {
 		return err
 	}
