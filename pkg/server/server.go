@@ -46,6 +46,7 @@ func NewServer(addr string) (*Server, error) {
 	cfg := &config.Config{
 		ProxyServerAddress: os.Getenv("PROXY_SERVER_URL"),
 		ProxySecret:        os.Getenv("PROXY_SECRET"),
+		ServerUrl: os.Getenv("SERVER_URL"),
 		Registry: config.RegistryConfig{
 			Url:      "registry.hostgolang.com",
 			Username: "MASTER",

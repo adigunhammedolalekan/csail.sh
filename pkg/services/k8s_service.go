@@ -391,19 +391,13 @@ func (d *defaultK8sService) createIngress(appName, domain string) error {
 	if err != nil {
 		return err
 	}
-	if err := d.provisionCertificate(appName, domain); err != nil {
-		log.Println("ProvisionCertError ", err)
-		return err
-	}
-	issuerName := fmt.Sprintf("%s-issuer", domain)
+
 	ingressName := fmt.Sprintf("%s-ingress", domain)
-	secretName := fmt.Sprintf("%s-sec", domain)
 	ingress := &v1beta1.Ingress{}
 	ingress.Name = ingressName
 	ingress.Annotations = map[string]string{
 		"kubernetes.io/ingress.class":                 "nginx",
 		"nginx.ingress.kubernetes.io/proxy-body-size": "10000m",
-		"cert-manager.io/cluster-issuer":              issuerName,
 	}
 
 	ports := svc.Spec.Ports
@@ -421,9 +415,6 @@ func (d *defaultK8sService) createIngress(appName, domain string) error {
 		Paths: []v1beta1.HTTPIngressPath{{Backend: backend}},
 	}
 	ingress.Spec.Backend = &backend
-	ingress.Spec.TLS = []v1beta1.IngressTLS{
-		{Hosts: []string{domain}, SecretName: secretName},
-	}
 	ingress.Spec.Rules = []v1beta1.IngressRule{*ingressRule}
 	if _, err := d.client.ExtensionsV1beta1().Ingresses(stormNs).Create(ingress); err != nil {
 		return err

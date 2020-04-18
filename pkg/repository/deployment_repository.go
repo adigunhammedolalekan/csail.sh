@@ -173,6 +173,7 @@ func (d *defaultDeploymentRepository) CreateDockerDeployment(app *types.App, doc
 	if err == nil {
 		result.Version = fmt.Sprintf("v%d", rs.VersionNumber)
 	}
+	result.Address = fmt.Sprintf("https://%s.%s", app.AppName, d.cfg.ServerUrl)
 	return result, nil
 }
 

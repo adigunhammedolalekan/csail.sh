@@ -25,6 +25,7 @@ type ResourcesDeployment interface {
 	GetResource(appId uint, resName string) (*types.Resource, error)
 	DeleteResource(app *types.App, resId uint, resName string) error
 	DumpDatabase(app *types.App, resName string) (io.Reader, error)
+	RestoreDatabase(app *types.App, resName string, data io.Reader) error
 	GetResourceEnvs(appId, resId uint) ([]types.ResourceEnv, error)
 }
 
@@ -68,7 +69,7 @@ func (d *defaultResourcesDeploymentRepo) DeployResource(opt *types.DeployResourc
 		r = pg.Postgres(opt.Memory, opt.Cpu, opt.StorageSize, m)
 	case "mysql":
 		key := fn.GenerateRandomString(50)
-		username, password, dbName := key, d.reverseMd5(key), key[:20]
+		username, password, dbName := fn.GenerateRandomString(30), d.reverseMd5(key), key[:20]
 		m := map[string]string{
 			"MYSQL_USER":          username,
 			"MYSQL_PASSWORD":      password,
@@ -167,9 +168,9 @@ func (d *defaultResourcesDeploymentRepo) DumpDatabase(app *types.App, resName st
 	if err != nil {
 		return nil, err
 	}
-	cmds := make([]string, 0)
 	switch resName {
 	case "pg":
+		cmds := make([]string, 0)
 		cmds = append(cmds, "pg_dump", "-U")
 		for _, e := range envs {
 			if e.EnvKey == "POSTGRES_USER" {
@@ -180,9 +181,30 @@ func (d *defaultResourcesDeploymentRepo) DumpDatabase(app *types.App, resName st
 			}
 		}
 		return d.k8s.Exec(app.AppName, "pg", cmds)
+	case "mysql":
+		cmds := make([]string, 0)
+		cmds = append(cmds, "mysqldump", "-u")
+		databaseName := ""
+		for _, e := range envs {
+			if e.EnvKey == "MYSQL_USER" {
+				cmds = append(cmds, e.EnvValue)
+			}
+			if e.EnvKey == "MYSQL_PASSWORD" {
+				cmds = append(cmds, fmt.Sprintf("-p%s", e.EnvValue))
+			}
+			if e.EnvKey == "MYSQL_DATABASE" {
+				databaseName = e.EnvValue
+			}
+		}
+		cmds = append(cmds, databaseName)
+		return d.k8s.Exec(app.AppName, "mysql", cmds)
 	default:
 		return nil, errors.New("not yet implemented")
 	}
+}
+
+func (d *defaultResourcesDeploymentRepo) RestoreDatabase(app *types.App, resName string, data io.Reader) error {
+	panic("")
 }
 
 func (d *defaultResourcesDeploymentRepo) GetResourceEnvs(appId, resId uint) ([]types.ResourceEnv, error) {

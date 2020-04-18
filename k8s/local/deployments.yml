@@ -33,6 +33,8 @@ spec:
               value: jwt$ecre7
             - name: PROXY_SECRET
               value: s3cret
+            - name: SERVER_URL
+              value: csail.app
           imagePullPolicy: Always
         - name: docker-container
           image: docker:18.05-dind

@@ -2,49 +2,15 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d33e0391-4457-4e31-88c7-44ad1bcaa58c" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/frontend/email.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pkg/services/email.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/Makefile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmd/cmd.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/cmd.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/login.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/login.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/reset.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/reset.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/signup.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/signup.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/hostgolang" beforeDir="false" afterPath="$PROJECT_DIR$/hostgolang" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/k8s/deployments.yml" beforeDir="false" afterPath="$PROJECT_DIR$/k8s/deployments.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/k8s/local/deployments.yml" beforeDir="false" afterPath="$PROJECT_DIR$/k8s/local/deployments.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/k8s/local/ingress.yml" beforeDir="false" afterPath="$PROJECT_DIR$/k8s/local/ingress.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/config/config.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/config/config.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/http/api_http_handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/http/api_http_handler.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/http/api_http_handler_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/http/api_http_handler_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/http/deployment_api_handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/http/deployment_api_handler.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/http/html_renderer.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/http/html_renderer.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/http/resources_deployment_handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/http/resources_deployment_handler.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/proxyclient/proxy_client.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/proxyclient/proxy_client.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/repository/accounts_repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/repository/accounts_repository.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/repository/apps_repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/repository/apps_repository.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/http/deployment_api_handler_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/http/deployment_api_handler_test.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/repository/deployment_repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/repository/deployment_repository.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/repository/mocks/accounts_repository_mock.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/repository/mocks/apps_repository_mock.go" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/repository/resources_deployment_repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/repository/resources_deployment_repository.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/res/pg/pg.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/res/pg/pg.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/res/res.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/res/res.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/server/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/server/server.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/services/docker_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/services/docker_service.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/services/git_service.go" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/services/k8s_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/services/k8s_service.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/services/minio_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/services/minio_service.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/services/mocks/docker_service_mock.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/services/mocks/k8s_service_mock.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/services/resources_k8s_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/services/resources_k8s_service.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/services/tcp_service.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/session/mocks/session_store.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/session/session.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/session/session.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/types/apps.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/types/apps.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/types/billing.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/types/billing.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/types/opts.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/types/opts.go" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -103,28 +69,6 @@
     </option>
   </component>
   <component name="RunManager" selected="Go Test.go test github.com/saas/hostgolang/pkg/http">
-    <configuration name="TestApiHandler_AuthenticateAccountHandler in github.com/saas/hostgolang/pkg/http" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
-      <module name="hostgolang" />
-      <working_directory value="$PROJECT_DIR$/pkg/http" />
-      <framework value="gotest" />
-      <kind value="PACKAGE" />
-      <package value="github.com/saas/hostgolang/pkg/http" />
-      <directory value="$PROJECT_DIR$/" />
-      <filePath value="$PROJECT_DIR$/" />
-      <pattern value="^TestApiHandler_AuthenticateAccountHandler$" />
-      <method v="2" />
-    </configuration>
-    <configuration name="TestApiHandler_AuthenticateAccountHandler2BadInput in github.com/saas/hostgolang/pkg/http" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
-      <module name="hostgolang" />
-      <working_directory value="$PROJECT_DIR$/pkg/http" />
-      <framework value="gotest" />
-      <kind value="PACKAGE" />
-      <package value="github.com/saas/hostgolang/pkg/http" />
-      <directory value="$PROJECT_DIR$/" />
-      <filePath value="$PROJECT_DIR$/" />
-      <pattern value="^TestApiHandler_AuthenticateAccountHandler2BadInput$" />
-      <method v="2" />
-    </configuration>
     <configuration name="TestApiHandler_CreateAppHandler in github.com/saas/hostgolang/pkg/http" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="hostgolang" />
       <working_directory value="$PROJECT_DIR$/pkg/http" />
@@ -147,6 +91,28 @@
       <pattern value="^TestApiHandler_CreateAppHandlerAuthError$" />
       <method v="2" />
     </configuration>
+    <configuration name="TestDeploymentHandler_CreateDockerDeployment in github.com/saas/hostgolang/pkg/http" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="hostgolang" />
+      <working_directory value="$PROJECT_DIR$/pkg/http" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="github.com/saas/hostgolang/pkg/http" />
+      <directory value="$PROJECT_DIR$/" />
+      <filePath value="$PROJECT_DIR$/" />
+      <pattern value="^TestDeploymentHandler_CreateDockerDeployment$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestDeploymentHandler_CreateDockerDeployment_Access_Control in github.com/saas/hostgolang/pkg/http" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="hostgolang" />
+      <working_directory value="$PROJECT_DIR$/pkg/http" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="github.com/saas/hostgolang/pkg/http" />
+      <directory value="$PROJECT_DIR$/" />
+      <filePath value="$PROJECT_DIR$/" />
+      <pattern value="^TestDeploymentHandler_CreateDockerDeployment_Access_Control$" />
+      <method v="2" />
+    </configuration>
     <configuration name="go test github.com/saas/hostgolang/pkg/http" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="hostgolang" />
       <working_directory value="$PROJECT_DIR$/pkg/http" />
@@ -160,10 +126,10 @@
     <recent_temporary>
       <list>
         <item itemvalue="Go Test.go test github.com/saas/hostgolang/pkg/http" />
+        <item itemvalue="Go Test.TestDeploymentHandler_CreateDockerDeployment_Access_Control in github.com/saas/hostgolang/pkg/http" />
+        <item itemvalue="Go Test.TestDeploymentHandler_CreateDockerDeployment in github.com/saas/hostgolang/pkg/http" />
         <item itemvalue="Go Test.TestApiHandler_CreateAppHandlerAuthError in github.com/saas/hostgolang/pkg/http" />
         <item itemvalue="Go Test.TestApiHandler_CreateAppHandler in github.com/saas/hostgolang/pkg/http" />
-        <item itemvalue="Go Test.TestApiHandler_AuthenticateAccountHandler2BadInput in github.com/saas/hostgolang/pkg/http" />
-        <item itemvalue="Go Test.TestApiHandler_AuthenticateAccountHandler in github.com/saas/hostgolang/pkg/http" />
       </list>
     </recent_temporary>
   </component>
