@@ -145,7 +145,6 @@ func (d *defaultResourcesService) createResourceService(serviceName string, targ
 	svc.Namespace = stormNs
 	// servicePort := findAvailablePort()
 	port := v1.ServicePort{
-		Name:       truncString(fmt.Sprintf("%15s", serviceName+"-serviceport")),
 		Protocol:   "TCP",
 		Port:       int32(targetPort),
 		TargetPort: intstr.FromInt(targetPort),
@@ -228,7 +227,6 @@ func (d *defaultResourcesService) createResourceStatefulSet(appName string, svc 
 	}
 	_ = r_
 	container.Ports = []v1.ContainerPort{{
-		Name:          truncString(fmt.Sprintf("%15s", name+"port")),
 		ContainerPort: int32(res.Port()),
 		Protocol:      "TCP",
 	}}

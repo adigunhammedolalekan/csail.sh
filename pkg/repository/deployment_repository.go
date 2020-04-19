@@ -128,7 +128,9 @@ func (d *defaultDeploymentRepository) updateRelease(r *types.Release) error {
 func (d *defaultDeploymentRepository) CreateRelease(app *types.App, ref string) error {
 	release, err := d.GetRelease(app.ID)
 	if err != nil {
-		return err
+		// a fresh app. create a new release
+		rls := types.NewRelease(app.ID, ref, 1)
+		return d.db.Create(rls).Error
 	}
 	envs, _ := d.appRepo.GetEnvironmentVars(app.AppName)
 	if envs == nil {

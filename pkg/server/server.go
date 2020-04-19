@@ -1,10 +1,10 @@
 package server
 
 import (
+	"github.com/adigunhammedolalekan/namegenerator"
 	"github.com/docker/docker/client"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
-	"github.com/goombaio/namegenerator"
 	"github.com/joho/godotenv"
 	"github.com/minio/minio-go/v6"
 	"github.com/saas/hostgolang/pkg/config"

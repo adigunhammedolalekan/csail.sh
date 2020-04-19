@@ -2,7 +2,7 @@ package repository
 
 import (
 	"errors"
-	"github.com/goombaio/namegenerator"
+	"github.com/adigunhammedolalekan/namegenerator"
 	"github.com/jinzhu/gorm"
 	"github.com/saas/hostgolang/pkg/services"
 	"github.com/saas/hostgolang/pkg/types"

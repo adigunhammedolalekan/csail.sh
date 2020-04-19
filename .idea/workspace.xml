@@ -2,14 +2,15 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="3906f629-966e-4d07-9da0-9eb63e663e8b" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hostgolang" beforeDir="false" afterPath="$PROJECT_DIR$/hostgolang" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/fn/fn_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/fn/fn_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/http/deployment_api_handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/http/deployment_api_handler.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/mocks/deployment_repository_mock.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/mocks/deployment_repository_mock.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pkg/repository/apps_repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/repository/apps_repository.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/repository/deployment_repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/repository/deployment_repository.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/server/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/server/server.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/services/minio_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/services/minio_service.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pkg/services/resources_k8s_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/services/resources_k8s_service.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pkg/types/apps.go" beforeDir="false" afterPath="$PROJECT_DIR$/pkg/types/apps.go" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -70,7 +71,9 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State />
+            <State>
+              <option name="COLUMN_ORDER" />
+            </State>
           </value>
         </entry>
       </map>
