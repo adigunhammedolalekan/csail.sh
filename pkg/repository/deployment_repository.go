@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"bytes"
-	"context"
 	"crypto/sha256"
 	"errors"
 	"fmt"
@@ -12,28 +10,23 @@ import (
 	"github.com/saas/hostgolang/pkg/services"
 	"github.com/saas/hostgolang/pkg/types"
 	"io"
-	"io/ioutil"
 	"log"
 )
 
-var ErrCreateImage = errors.New("failed to create docker image for app. Please contact support")
-var ErrPushImage = errors.New("failed to push image to remote repository. Please contact support")
 var ErrDeploymentFailed = errors.New("deployment failed. Please contact support")
 var ErrNoChangeToDeploy = errors.New("no changes to deploy")
 var ErrNotFound = errors.New("resources not found")
 var ErrReleaseNotFound = errors.New("release not found")
-var ErrNoDockerFile = errors.New("no Dockerfile found in this git repository")
 
 const tempClonePath = "/tmp/git"
 //go:generate mockgen -destination=../mocks/deployment_repository_mock.go -package=mocks github.com/saas/hostgolang/pkg/repository DeploymentRepository
 type DeploymentRepository interface {
-	CreateDeployment(app *types.App, reader io.Reader) (*types.DeploymentResult, error)
-	CreateDockerDeployment(app *types.App, dockerUrl string) (*types.DeploymentResult, error)
+	CreateDeployment(app *types.App, dockerUrl string) (*types.DeploymentResult, error)
 	UpdateEnvironmentVars(app *types.App, envs []types.Environment) error
 	GetApplicationLogs(appName string) (string, error)
-	CheckRelease(appId uint, r io.Reader) (string, error)
 	GetRelease(appId uint) (*types.Release, error)
-	CreateRelease(appId uint, checkSum string, data []byte) error
+	GetReleaseByVersion(appId uint, version string) (*types.Release, error)
+	CreateRelease(app *types.App, ref string) error
 	CreateOrUpdateDeploymentSettings(appId, replicas uint) error
 	GetDeploymentSettings(appId uint) (*types.DeploymentSettings, error)
 	RollbackDeployment(appId uint, version string) (*types.DeploymentResult, error)
@@ -51,85 +44,15 @@ type defaultDeploymentRepository struct {
 	cfg        *config.Config
 }
 
-func (d *defaultDeploymentRepository) CreateDeployment(app *types.App, reader io.Reader) (*types.DeploymentResult, error) {
-	data, err := ioutil.ReadAll(reader)
-	if err != nil {
-		return nil, err
-	}
-	buf := bytes.NewBuffer(data)
-	builder := bytes.NewBuffer(data)
-
-	checkSum, err := d.CheckRelease(app.ID, buf)
-	if err == ErrNoChangeToDeploy {
-		return nil, err
-	}
-	buildDir := fmt.Sprintf("%sBuild", app.AppName)
-	appName := app.AppName
-
-	dockerUrl, err := d.docker.BuildImage(context.Background(), buildDir, appName, builder)
-	if err != nil {
-		log.Println("failed to build docker image; ", err)
-		return nil, ErrCreateImage
-	}
-	if err := d.docker.PushImage(context.Background(), dockerUrl); err != nil {
-		log.Println("failed to push built image: ", err)
-		return nil, ErrPushImage
-	}
-	var replicas uint = 1
-	settings, err := d.GetDeploymentSettings(app.ID)
-	if err == nil {
-		replicas = settings.Replicas
-	}
-	envs, _ := d.appRepo.GetEnvironmentVars(appName)
-	m := make(map[string]string, 0)
-	if envs != nil && len(envs) > 0 {
-		for _, e := range envs {
-			m[e.EnvKey] = e.EnvValue
-		}
-	}
-	opt := &types.CreateDeploymentOpts{
-		Envs:     m,
-		Name:     appName,
-		Replicas: int32(replicas),
-		Tag:      dockerUrl,
-		IsLocal:  true,
-		Memory:   settings.Plan.Info.Memory,
-		Cpu:      settings.Plan.Info.Cpu,
-	}
-
-	result, err := d.k8s.DeployService(opt)
-	if err != nil {
-		log.Println("failed to deploy service: ", err)
-		return nil, ErrDeploymentFailed
-	}
-	if err := d.proxy.Set(appName, result.Address); err != nil {
-		log.Println("failed to contact proxy server: ", err)
-		return nil, ErrDeploymentFailed
-	}
-	if err := d.CreateRelease(app.ID, checkSum, data); err != nil {
-		log.Println("failed to create a new release: ", err)
-	}
-	if err := d.CreateOrUpdateDeploymentSettings(app.ID, replicas); err != nil {
-		log.Println("failed to create deployment settings: ", err)
-	}
-	rs, err := d.GetRelease(app.ID)
-	if err == nil {
-		result.Version = fmt.Sprintf("v%d", rs.VersionNumber)
-	}
-	return result, nil
-}
-
-func (d *defaultDeploymentRepository) CreateDockerDeployment(app *types.App, dockerUrl string) (*types.DeploymentResult, error) {
+func (d *defaultDeploymentRepository) CreateDeployment(app *types.App, dockerUrl string) (*types.DeploymentResult, error) {
 	rls, err := d.GetRelease(app.ID)
 	if err == nil && rls.DockerUrl == dockerUrl {
 		return nil, ErrNoChangeToDeploy
 	}
-	if err == ErrReleaseNotFound {
-		rls = types.NewReleaseFromDockerUrl(app.ID, dockerUrl, 1)
-		if err := d.db.Create(rls).Error; err != nil {
-			return nil, ErrDeploymentFailed
-		}
+	if err := d.CreateRelease(app, dockerUrl); err != nil {
+		return nil, err
 	}
+
 	appName := app.AppName
 	var replicas uint = 1
 	settings, err := d.GetDeploymentSettings(app.ID)
@@ -162,17 +85,11 @@ func (d *defaultDeploymentRepository) CreateDockerDeployment(app *types.App, doc
 		log.Println("failed to contact proxy server: ", err)
 		return nil, ErrDeploymentFailed
 	}
-	rls.DockerUrl = dockerUrl
-	if err := d.updateRelease(rls); err != nil {
-		log.Println("failed to create a new release: ", err)
-	}
+
 	if err := d.CreateOrUpdateDeploymentSettings(app.ID, replicas); err != nil {
 		log.Println("failed to create deployment settings: ", err)
 	}
-	rs, err := d.GetRelease(app.ID)
-	if err == nil {
-		result.Version = fmt.Sprintf("v%d", rs.VersionNumber)
-	}
+	result.Version = fmt.Sprintf("v%d", rls.VersionNumber + 1)
 	result.Address = fmt.Sprintf("https://%s.%s", app.AppName, d.cfg.ServerUrl)
 	return result, nil
 }
@@ -185,23 +102,10 @@ func (d *defaultDeploymentRepository) GetApplicationLogs(appName string) (string
 	return d.k8s.GetLogs(appName)
 }
 
-func (d *defaultDeploymentRepository) CheckRelease(appId uint, r io.Reader) (string, error) {
-	checkSum := d.calculateCheckSum(r)
-	release, err := d.GetRelease(appId)
-	if err != nil || release.LastCheckSum == "" {
-		return checkSum, nil
-	}
-	if release.LastCheckSum == checkSum {
-		return checkSum, ErrNoChangeToDeploy
-	}
-	return checkSum, nil
-}
-
 func (d *defaultDeploymentRepository) GetRelease(appId uint) (*types.Release, error) {
 	r := &types.Release{}
 	err := d.db.Table("releases").Where("app_id = ?", appId).First(r).Error
 	if err != nil {
-		log.Println(err)
 		return r, ErrReleaseNotFound
 	}
 	return r, nil
@@ -221,29 +125,33 @@ func (d *defaultDeploymentRepository) updateRelease(r *types.Release) error {
 	return d.db.Table("releases").Where("id = ?", r.ID).Update(r).Error
 }
 
-func (d *defaultDeploymentRepository) CreateRelease(appId uint, checkSum string, data []byte) error {
-	release, err := d.GetRelease(appId)
-	if err != nil || release.LastCheckSum == "" {
-		// first time. create a new release
-		rls := types.NewRelease(appId, checkSum, 1)
-		return d.db.Create(rls).Error
-	}
-	release.LastCheckSum = checkSum
-	if err := d.updateRelease(release); err != nil {
+func (d *defaultDeploymentRepository) CreateRelease(app *types.App, ref string) error {
+	release, err := d.GetRelease(app.ID)
+	if err != nil {
 		return err
 	}
-	app, _ := d.appRepo.GetAppById(appId)
 	envs, _ := d.appRepo.GetEnvironmentVars(app.AppName)
-	cfg := &types.ReleaseConfig{Envs: envs, Version: fmt.Sprintf("%s:v%d", app.AppName, release.VersionNumber)}
-	go func(storage services.StorageClient, reader []byte, r *types.ReleaseConfig) {
-		if err := storage.Put(r.Version, reader); err != nil {
-			log.Println("failed to store app release: ", err)
-		}
-		if err := storage.PutReleaseConfig(r.Version, r); err != nil {
-			log.Println("failed to store app release configuration: ", err)
-		}
-	}(d.storage, data, cfg)
-	return nil
+	if envs == nil {
+		envs = make([]types.Environment, 0)
+	}
+	newReleaseNumber := release.VersionNumber + 1
+	version := fmt.Sprintf("v%d", newReleaseNumber)
+	key := fmt.Sprintf("%s:%s", app.AppName, version)
+	rlsConfig := types.NewReleaseConfig(version, envs)
+	if err := d.storage.PutReleaseConfig(key, rlsConfig); err != nil {
+		return err
+	}
+	rls := types.NewRelease(app.ID, ref, release.VersionNumber + 1)
+	return d.db.Create(rls).Error
+}
+
+func (d *defaultDeploymentRepository) GetReleaseByVersion(appId uint, version string) (*types.Release, error) {
+	r := &types.Release{}
+	err := d.db.Table("releases").Where("app_id = ? AND version = ?", appId, version).First(r).Error
+	if err != nil {
+		return r, ErrReleaseNotFound
+	}
+	return r, nil
 }
 
 func (d *defaultDeploymentRepository) GetReleases(appId uint) ([]types.Release, error) {
@@ -284,32 +192,21 @@ func (d *defaultDeploymentRepository) RollbackDeployment(appId uint, version str
 	if fmt.Sprintf("v%d", currentRelease.VersionNumber) == version {
 		return nil, errors.New("cannot rollback to current release")
 	}
-
+	versionNumber := version[1:]
+	rls, err := d.GetReleaseByVersion(appId, versionNumber)
+	if err != nil {
+		return nil, err
+	}
 	app, err := d.appRepo.GetAppById(appId)
 	if err != nil {
 		return nil, err
 	}
 	key := fmt.Sprintf("%s:%s", app.AppName, version)
-	reader, err := d.storage.Get(key)
-	if err != nil {
-		return nil, err
-	}
 	cfg, err := d.storage.GetReleaseConfig(key)
 	if err != nil {
 		return nil, err
 	}
-	buildDir := fmt.Sprintf("%sBuild", app.AppName)
 	appName := app.AppName
-
-	dockerUrl, err := d.docker.BuildImage(context.Background(), buildDir, appName, reader)
-	if err != nil {
-		log.Println("failed to build docker image; ", err)
-		return nil, ErrCreateImage
-	}
-	if err := d.docker.PushImage(context.Background(), dockerUrl); err != nil {
-		log.Println("failed to push built image: ", err)
-		return nil, ErrPushImage
-	}
 	var replicas uint = 1
 	settings, err := d.GetDeploymentSettings(app.ID)
 	if err == nil {
@@ -326,7 +223,7 @@ func (d *defaultDeploymentRepository) RollbackDeployment(appId uint, version str
 		Envs:     m,
 		Name:     appName,
 		Replicas: int32(replicas),
-		Tag:      dockerUrl,
+		Tag:      rls.DockerUrl,
 		IsLocal:  true,
 		Memory:   settings.Plan.Info.Memory,
 		Cpu:      settings.Plan.Info.Cpu,
@@ -342,6 +239,7 @@ func (d *defaultDeploymentRepository) RollbackDeployment(appId uint, version str
 		return nil, ErrDeploymentFailed
 	}
 	result.Version = version
+	result.Address = fmt.Sprintf("https://%s.%s", app.AppName, d.cfg.ServerUrl)
 	return result, nil
 }
 

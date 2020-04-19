@@ -29,7 +29,6 @@ type Environment struct {
 type Release struct {
 	gorm.Model
 	AppId         uint   `json:"app_id"`
-	LastCheckSum  string `json:"last_check_sum"`
 	VersionNumber int64  `json:"version"`
 	DockerUrl     string `json:"docker_url"`
 }
@@ -68,21 +67,14 @@ func NewDeploymentSettings(appId, replicas uint) *DeploymentSettings {
 	return &DeploymentSettings{AppId: appId, Replicas: replicas}
 }
 
-func NewRelease(appId uint, checkSum string, v int64) *Release {
+func NewRelease(appId uint, ref string, v int64) *Release {
 	return &Release{
 		AppId:         appId,
-		LastCheckSum:  checkSum,
+		DockerUrl: ref,
 		VersionNumber: v,
 	}
 }
 
-func NewReleaseFromDockerUrl(appId uint, dockerUrl string, v int64) *Release {
-	return &Release{
-		AppId:         appId,
-		DockerUrl:     dockerUrl,
-		VersionNumber: v,
-	}
-}
 
 func NewEnvVariable(appId, resId uint, k, v string) *Environment {
 	return &Environment{
@@ -99,5 +91,11 @@ func NewApp(name string, accountId uint) *App {
 		AppName:   name,
 		AccessUrl: fmt.Sprintf("https://%s.hostgoapp.com", name),
 		GitUrl:    fmt.Sprintf("https://git.hostgoapp.com/%s.git", name),
+	}
+}
+
+func NewReleaseConfig(version string, envs []Environment) *ReleaseConfig {
+	return &ReleaseConfig{
+		Version: version, Envs: envs,
 	}
 }

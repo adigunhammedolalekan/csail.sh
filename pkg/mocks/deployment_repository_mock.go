@@ -64,19 +64,19 @@ func (mr *MockDeploymentRepositoryMockRecorder) CreateDeployment(arg0, arg1 inte
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDeployment", reflect.TypeOf((*MockDeploymentRepository)(nil).CreateDeployment), arg0, arg1)
 }
 
-// CreateDockerDeployment mocks base method
+// CreateDeployment mocks base method
 func (m *MockDeploymentRepository) CreateDockerDeployment(arg0 *types.App, arg1 string) (*types.DeploymentResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateDockerDeployment", arg0, arg1)
+	ret := m.ctrl.Call(m, "CreateDeployment", arg0, arg1)
 	ret0, _ := ret[0].(*types.DeploymentResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// CreateDockerDeployment indicates an expected call of CreateDockerDeployment
+// CreateDeployment indicates an expected call of CreateDeployment
 func (mr *MockDeploymentRepositoryMockRecorder) CreateDockerDeployment(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDockerDeployment", reflect.TypeOf((*MockDeploymentRepository)(nil).CreateDockerDeployment), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDeployment", reflect.TypeOf((*MockDeploymentRepository)(nil).CreateDockerDeployment), arg0, arg1)
 }
 
 // CreateOrUpdateDeploymentSettings mocks base method

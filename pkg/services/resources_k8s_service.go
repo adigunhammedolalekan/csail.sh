@@ -13,7 +13,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/retry"
+	"log"
 	"strings"
+	"time"
 )
 
 //go:generate mockgen -destination=../mocks/resources_k8s_service_mock.go -package=mocks github.com/saas/hostgolang/pkg/services ResourcesService
@@ -75,6 +77,23 @@ func (d *defaultResourcesService) DeployResource(app *types.App,
 	}
 	if local {
 		lbAddress = fmt.Sprintf("%s.%s:%d", svc.Name, stormNs, res.Port())
+	}
+	stName := fmt.Sprintf("st-%s-%s", res.Name(), app.AppName)
+	count := 0
+	for {
+		if count == 5 {
+			break
+		}
+		sts, err := d.getStatefulset(stName)
+		if err != nil {
+			continue
+		}
+		log.Println("Sts Status => ", sts.Status)
+		if status := sts.Status; status.ReadyReplicas > 0 && (status.ReadyReplicas == status.Replicas) {
+			break
+		}
+		count += 1
+		time.Sleep(2 * time.Second)
 	}
 	// update deployment's environment variable to contain
 	// the newly added resources config
@@ -246,6 +265,10 @@ func (d *defaultResourcesService) createResourceStatefulSet(appName string, svc 
 
 func (d *defaultResourcesService) getService(appName string) (*v1.Service, error) {
 	return d.client.CoreV1().Services(stormNs).Get(appName, metav1.GetOptions{})
+}
+
+func (d *defaultResourcesService) getStatefulset(name string) (*appsv1.StatefulSet, error) {
+	return d.client.AppsV1().StatefulSets(stormNs).Get(name, metav1.GetOptions{})
 }
 
 func (d *defaultResourcesService) restartApp(deployment *appsv1.Deployment) error {

@@ -21,44 +21,6 @@ func NewDeploymentHandler(repo repository.DeploymentRepository, appRepo reposito
 	return &DeploymentHandler{repo: repo, store: s, appRepo: appRepo}
 }
 
-func (handler *DeploymentHandler) CreateDeploymentHandler(ctx *gin.Context) {
-	account := handler.ensureAccount(ctx)
-	if account == nil {
-		return
-	}
-	file, err := ctx.FormFile("bin")
-	appName := ctx.PostForm("app_name")
-	if appName == "" {
-		BadRequestResponse(ctx, "bad request: app name is missing")
-		return
-	}
-	if err != nil {
-		BadRequestResponse(ctx, "deployment binary file is missing")
-		return
-	}
-	app, err := handler.appRepo.GetApp(appName)
-	if err != nil {
-		BadRequestResponse(ctx, fmt.Sprintf("application not found: %s", appName))
-		return
-	}
-	if app.AccountId != account.ID {
-		ForbiddenRequestResponse(ctx, "this app does not belong to you")
-		return
-	}
-	fi, err := file.Open()
-	if err != nil {
-		log.Println("failed to open the attached bin: ", err)
-		BadRequestResponse(ctx, "deployment binary file is missing")
-		return
-	}
-	r, err := handler.repo.CreateDeployment(app, fi)
-	if err != nil {
-		InternalServerErrorResponse(ctx, err.Error())
-		return
-	}
-	ctx.JSON(http.StatusOK, &SuccessResponse{Error: false, Message: "deployment created", Data: r})
-}
-
 func (handler *DeploymentHandler) CreateDockerDeployment(ctx *gin.Context) {
 	account := handler.ensureAccount(ctx)
 	if account == nil {
@@ -81,7 +43,7 @@ func (handler *DeploymentHandler) CreateDockerDeployment(ctx *gin.Context) {
 		ForbiddenRequestResponse(ctx, "forbidden")
 		return
 	}
-	r, err := handler.repo.CreateDockerDeployment(app, request.DockerUrl)
+	r, err := handler.repo.CreateDeployment(app, request.DockerUrl)
 	if err != nil {
 		InternalServerErrorResponse(ctx, err.Error())
 		return

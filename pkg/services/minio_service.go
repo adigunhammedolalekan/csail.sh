@@ -6,10 +6,8 @@ import (
 	"errors"
 	"github.com/minio/minio-go/v6"
 	"github.com/saas/hostgolang/pkg/types"
-	"io"
 )
 
-const appsBinaryBucket = "applications"
 const appsConfigBucket = "application-configs"
 
 var ErrEncodeDecode = errors.New("failed to decode/encode config application config")
@@ -18,8 +16,6 @@ var ErrPersistData = errors.New("failed to persist application data")
 
 //go:generate mockgen -destination=../mocks/storage_client_mock.go -package=mocks github.com/saas/hostgolang/pkg/services StorageClient
 type StorageClient interface {
-	Put(key string, data []byte) error
-	Get(key string) (io.Reader, error)
 	PutReleaseConfig(key string, cfg *types.ReleaseConfig) error
 	GetReleaseConfig(key string) (*types.ReleaseConfig, error)
 }
@@ -31,32 +27,12 @@ type minioStorageClient struct {
 func NewMinioStorageClient(client *minio.Client) (StorageClient, error) {
 	m := &minioStorageClient{}
 	m.minioClient = client
-	if err := m.minioClient.MakeBucket(appsBinaryBucket, "us-east-1"); err != nil {
-		if exists, err := m.minioClient.BucketExists(appsBinaryBucket); err != nil || !exists {
-			return nil, err
-		}
-	}
 	if err := m.minioClient.MakeBucket(appsConfigBucket, "us-east-1"); err != nil {
 		if exists, err := m.minioClient.BucketExists(appsConfigBucket); err != nil || !exists {
 			return nil, err
 		}
 	}
 	return m, nil
-}
-
-func (m *minioStorageClient) Put(key string, data []byte) error {
-	l := int64(len(data))
-	if _, err := m.minioClient.PutObject(appsBinaryBucket, key, bytes.NewBuffer(data), l, minio.PutObjectOptions{}); err != nil {
-		return ErrPersistData
-	}
-	return nil
-}
-
-func (m *minioStorageClient) Get(key string) (io.Reader, error) {
-	if val, err := m.minioClient.GetObject(appsBinaryBucket, key, minio.GetObjectOptions{}); err == nil {
-		return val, nil
-	}
-	return nil, ErrDataNotFound
 }
 
 func (m *minioStorageClient) PutReleaseConfig(key string, cfg *types.ReleaseConfig) error {

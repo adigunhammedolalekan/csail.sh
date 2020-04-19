@@ -105,7 +105,6 @@ func NewServer(addr string) (*Server, error) {
 	apiRouter.POST("/account/authenticate", apiHandler.AuthenticateAccountHandler)
 	apiRouter.POST("/me/apps", apiHandler.CreateAppHandler)
 	apiRouter.GET("/me/apps", apiHandler.GetAccountApps)
-	apiRouter.POST("/apps/deploy", deploymentHandler.CreateDeploymentHandler)
 	apiRouter.POST("/apps/docker/deploy", deploymentHandler.CreateDockerDeployment)
 	apiRouter.GET("/apps/configs/:appName", deploymentHandler.GetEnvironmentVars)
 	apiRouter.GET("/apps/logs/:appName", deploymentHandler.GetApplicationLogsHandler)
