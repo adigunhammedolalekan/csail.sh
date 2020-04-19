@@ -13,7 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/retry"
-	"log"
 	"strings"
 	"time"
 )
@@ -88,7 +87,6 @@ func (d *defaultResourcesService) DeployResource(app *types.App,
 		if err != nil {
 			continue
 		}
-		log.Println("Sts Status => ", sts.Status)
 		if status := sts.Status; status.ReadyReplicas > 0 && (status.ReadyReplicas == status.Replicas) {
 			break
 		}
