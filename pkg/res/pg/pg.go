@@ -39,6 +39,10 @@ func (p *pgResource) Args() []string {
 	return []string{}
 }
 
+func (p *pgResource) URI() string {
+	return ""
+}
+
 func Postgres(mem, cpu, ss float64, envs map[string]string) res.Res {
 	return &pgResource{
 		memory: mem, cpu: cpu, storageSize: ss, envs: envs,

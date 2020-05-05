@@ -107,3 +107,17 @@ func (mr *MockResourcesDeploymentMockRecorder) GetResourceEnvs(arg0, arg1 interf
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResourceEnvs", reflect.TypeOf((*MockResourcesDeployment)(nil).GetResourceEnvs), arg0, arg1)
 }
+
+// RestoreDatabase mocks base method
+func (m *MockResourcesDeployment) RestoreDatabase(arg0 *types.App, arg1 string, arg2 io.Reader) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RestoreDatabase", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RestoreDatabase indicates an expected call of RestoreDatabase
+func (mr *MockResourcesDeploymentMockRecorder) RestoreDatabase(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RestoreDatabase", reflect.TypeOf((*MockResourcesDeployment)(nil).RestoreDatabase), arg0, arg1, arg2)
+}

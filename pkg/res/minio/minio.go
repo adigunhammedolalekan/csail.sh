@@ -35,6 +35,11 @@ func (m *minioResource) Args() []string {
 	return []string{"server", "/data"}
 }
 
+func (m *minioResource) URI() string {
+	return ""
+}
+
+
 func Minio(mem, cpu, storageSize float64, envs map[string]string) res.Res {
 	return &minioResource{memory: mem, cpu: cpu, storageSize: storageSize, envs: envs}
 }

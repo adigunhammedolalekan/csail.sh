@@ -94,7 +94,7 @@ func NewServer(addr string) (*Server, error) {
 	appRepo := repository.NewAppsRepository(db, namegenerator.NewNameGenerator(time.Now().UnixNano()), k8sService)
 	deploymentRepo := repository.NewDeploymentRepository(db, dockerService, k8sService,
 		proxyClient, appRepo, storageClient, cfg)
-	resourceRepo := repository.NewResourcesDeploymentRepository(db, appRepo, accountRepo, resourseK8sClient)
+	resourceRepo := repository.NewResourcesDeploymentRepository(db, appRepo, accountRepo, resourseK8sClient, dockerService)
 
 	apiHandler := http.NewApiHandler(appRepo, accountRepo, sessionStore)
 	deploymentHandler := http.NewDeploymentHandler(deploymentRepo, appRepo, sessionStore)
@@ -118,6 +118,7 @@ func NewServer(addr string) (*Server, error) {
 	apiRouter.GET("/apps/releases/:appName", deploymentHandler.GetReleasesHandler)
 	apiRouter.POST("/apps/domain/new", deploymentHandler.AddDomainHandler)
 	apiRouter.GET("/apps/resource/dump/:appName", resourcesDeploymentHandler.DumpDatabaseHandler)
+	apiRouter.GET("/apps/resource/restore/:appName", resourcesDeploymentHandler.RestoreDatabaseHandler)
 	apiRouter.DELETE("/apps/domain/remove", deploymentHandler.RemoveDomainHandler)
 	apiRouter.POST("/apps/use", apiHandler.UseAppHandler)
 	apiRouter.GET("/status", apiHandler.StatusHandler)

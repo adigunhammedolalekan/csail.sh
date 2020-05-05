@@ -36,17 +36,6 @@ spec:
             - name: SERVER_URL
               value: csail.app
           imagePullPolicy: Always
-        - name: docker-container
-          image: docker:18.05-dind
-          securityContext:
-            privileged: true
-          volumeMounts:
-            - name: dind-storage
-              mountPath: /var/lib/docker
-          ports:
-            - containerPort: 2375
-              protocol: TCP
-              name: docker-port
       imagePullSecrets:
         - name: hostgo-secret
       volumes:
@@ -92,29 +81,3 @@ spec:
     metadata:
       labels:
         app: proxy-service
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: echo
-  labels:
-    app: echo-service
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: echo-service
-  template:
-    spec:
-      containers:
-        - name: echo-container
-          image: hashicorp/http-echo
-          ports:
-            - containerPort: 5678
-              protocol: TCP
-              name: e-port
-          args:
-            - "-text=Hello, Echo"
-    metadata:
-      labels:
-        app: echo-service

@@ -8,6 +8,7 @@ type Res interface {
 	PublishableEnvs() map[string]string
 	Port() int
 	Args() []string
+	URI() string
 }
 
 type Quota struct {
@@ -62,4 +63,8 @@ func (p *genericResource) Port() int {
 
 func (p *genericResource) Args() []string {
 	return []string{}
+}
+
+func (p *genericResource) URI() string {
+	return ""
 }

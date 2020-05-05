@@ -28,7 +28,7 @@ func TestDeploymentHandler_CreateDockerDeployment(t *testing.T) {
 	testHeader := "testHeader"
 	appRepo.EXPECT().GetApp(appName).Return(mockApp, nil)
 	session.EXPECT().Get(testHeader).Return(mockAccount, nil)
-	deploymentRepo.EXPECT().CreateDockerDeployment(mockApp, testDockerUrl).Return(&types.DeploymentResult{
+	deploymentRepo.EXPECT().CreateDeployment(mockApp, testDockerUrl).Return(&types.DeploymentResult{
 		Address: "https://new.app",
 		Version: "v1",
 	}, nil)

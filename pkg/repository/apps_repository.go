@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 	"github.com/adigunhammedolalekan/namegenerator"
 	"github.com/jinzhu/gorm"
 	"github.com/saas/hostgolang/pkg/services"
@@ -87,7 +88,7 @@ func (a *appsRepository) GetApp(name string) (*types.App, error) {
 	case nil:
 		return app, nil
 	default:
-		return nil, ErrAppNotFound
+		return nil, errors.New(fmt.Sprintf("%s | %s", err.Error(), ErrAppNotFound.Error()))
 	}
 }
 

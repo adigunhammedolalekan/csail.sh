@@ -64,6 +64,11 @@ func (handler *DeploymentHandler) UpdateEnvironmentVars(ctx *gin.Context) {
 		BadRequestResponse(ctx, "application name is missing")
 		return
 	}
+	app, err := handler.appRepo.GetApp(appName)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, &ErrorResponse{Error: true, Message: "app not found"})
+		return
+	}
 	type request struct {
 		Key   string `json:"key"`
 		Value string `json:"value"`
@@ -77,12 +82,22 @@ func (handler *DeploymentHandler) UpdateEnvironmentVars(ctx *gin.Context) {
 	for _, p := range params {
 		m[p.Key] = p.Value
 	}
-	err := handler.appRepo.UpdateEnvironmentVars(appName, m)
+	err = handler.appRepo.UpdateEnvironmentVars(appName, m)
 	if err != nil {
 		InternalServerErrorResponse(ctx, err.Error())
 		return
 	}
-	ctx.JSON(http.StatusOK, &SuccessResponse{Error: false, Message: "environment config vars updated"})
+	if err := handler.repo.CreateRelease(app, ""); err != nil {
+		InternalServerErrorResponse(ctx, "error: failed to create a release. " + err.Error())
+		return
+	}
+	rls, err := handler.repo.GetRelease(app.ID)
+	if err != nil {
+		InternalServerErrorResponse(ctx, "error: failed to find last created release")
+		return
+	}
+	response := fmt.Sprintf("%s | v%d", "environment config vars updated", rls.VersionNumber)
+	ctx.JSON(http.StatusOK, &SuccessResponse{Error: false, Message: response})
 }
 
 func (handler *DeploymentHandler) GetEnvironmentVars(ctx *gin.Context) {
@@ -161,7 +176,17 @@ func (handler *DeploymentHandler) DeleteEnvironmentVars(ctx *gin.Context) {
 		InternalServerErrorResponse(ctx, err.Error())
 		return
 	}
-	ctx.JSON(http.StatusOK, &SuccessResponse{Error: false, Message: "env value deleted."})
+	if err := handler.repo.CreateRelease(app, ""); err != nil {
+		InternalServerErrorResponse(ctx, "error: failed to create a release. " + err.Error())
+		return
+	}
+	rls, err := handler.repo.GetRelease(app.ID)
+	if err != nil {
+		InternalServerErrorResponse(ctx, "error: failed to find last created release")
+		return
+	}
+	response := fmt.Sprintf("%s | v%d", "environment config vars updated", rls.VersionNumber)
+	ctx.JSON(http.StatusOK, &SuccessResponse{Error: false, Message: response})
 }
 
 func (handler *DeploymentHandler) ScaleAppHandler(ctx *gin.Context) {
@@ -229,6 +254,7 @@ func (handler *DeploymentHandler) RollbackDeploymentHandler(ctx *gin.Context) {
 	}
 	app, err := handler.appRepo.GetApp(appName)
 	if err != nil {
+		log.Println("app not found ", err.Error(), appName)
 		BadRequestResponse(ctx, err.Error())
 		return
 	}

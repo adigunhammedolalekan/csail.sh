@@ -128,6 +128,48 @@ func (handler *ResourcesDeploymentHandler) DumpDatabaseHandler(ctx *gin.Context)
 	ctx.Data(http.StatusOK, ct, b)
 }
 
+func (handler *ResourcesDeploymentHandler) RestoreDatabaseHandler(ctx *gin.Context) {
+	account := handler.ensureAccount(ctx)
+	if account == nil {
+		return
+	}
+	appName := ctx.Param("appName")
+	if appName == "" {
+		BadRequestResponse(ctx, "bad request: app name is missing")
+		return
+	}
+	resName := ctx.Query("res")
+	if resName == "" {
+		BadRequestResponse(ctx, "bad request: resource name is missing")
+		return
+	}
+	fi, err := ctx.FormFile("data")
+	if err != nil {
+		BadRequestResponse(ctx, "failed to read database data " + err.Error())
+		return
+	}
+	f, err := fi.Open()
+	if err != nil {
+		BadRequestResponse(ctx, "failed to read database data " + err.Error())
+		return
+	}
+	app, err := handler.appRepo.GetApp(appName)
+	if err != nil {
+		BadRequestResponse(ctx, "app not found")
+		return
+	}
+	if app.AccountId != account.ID {
+		ForbiddenRequestResponse(ctx, "forbidden")
+		return
+	}
+	err = handler.repo.RestoreDatabase(app, resName, f)
+	if err != nil {
+		InternalServerErrorResponse(ctx, err.Error())
+		return
+	}
+	ctx.JSON(http.StatusOK, &SuccessResponse{Error: false, Message: "database restored"})
+}
+
 func (handler *ResourcesDeploymentHandler) ensureAccount(ctx *gin.Context) *types.Account {
 	token := ctx.GetHeader(tokenHeaderName)
 	if token == "" {

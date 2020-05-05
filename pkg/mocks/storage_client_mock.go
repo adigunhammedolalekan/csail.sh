@@ -7,7 +7,6 @@ package mocks
 import (
 	gomock "github.com/golang/mock/gomock"
 	types "github.com/saas/hostgolang/pkg/types"
-	io "io"
 	reflect "reflect"
 )
 
@@ -34,21 +33,6 @@ func (m *MockStorageClient) EXPECT() *MockStorageClientMockRecorder {
 	return m.recorder
 }
 
-// Get mocks base method
-func (m *MockStorageClient) Get(arg0 string) (io.Reader, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", arg0)
-	ret0, _ := ret[0].(io.Reader)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Get indicates an expected call of Get
-func (mr *MockStorageClientMockRecorder) Get(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockStorageClient)(nil).Get), arg0)
-}
-
 // GetReleaseConfig mocks base method
 func (m *MockStorageClient) GetReleaseConfig(arg0 string) (*types.ReleaseConfig, error) {
 	m.ctrl.T.Helper()
@@ -62,20 +46,6 @@ func (m *MockStorageClient) GetReleaseConfig(arg0 string) (*types.ReleaseConfig,
 func (mr *MockStorageClientMockRecorder) GetReleaseConfig(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetReleaseConfig", reflect.TypeOf((*MockStorageClient)(nil).GetReleaseConfig), arg0)
-}
-
-// Put mocks base method
-func (m *MockStorageClient) Put(arg0 string, arg1 []byte) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Put", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Put indicates an expected call of Put
-func (mr *MockStorageClientMockRecorder) Put(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockStorageClient)(nil).Put), arg0, arg1)
 }
 
 // PutReleaseConfig mocks base method

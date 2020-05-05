@@ -14,7 +14,9 @@ import (
 	"github.com/saas/hostgolang/pkg/services"
 	"github.com/saas/hostgolang/pkg/types"
 	"io"
+	"io/ioutil"
 	"log"
+	"path/filepath"
 	"strings"
 )
 
@@ -34,6 +36,7 @@ type defaultResourcesDeploymentRepo struct {
 	appRepo     AppsRepository
 	accountRepo AccountRepository
 	k8s         services.ResourcesService
+	docker services.DockerService
 }
 
 func (d *defaultResourcesDeploymentRepo) DeployResource(opt *types.DeployResourcesOpt) (*types.ResourceDeploymentResult, error) {
@@ -204,7 +207,49 @@ func (d *defaultResourcesDeploymentRepo) DumpDatabase(app *types.App, resName st
 }
 
 func (d *defaultResourcesDeploymentRepo) RestoreDatabase(app *types.App, resName string, data io.Reader) error {
-	panic("")
+	r, err := d.GetResource(app.ID, resName)
+	if err != nil {
+		return err
+	}
+	envs, err := d.GetResourceEnvs(app.ID, r.ID)
+	if err != nil {
+		return err
+	}
+
+	switch resName {
+	case "pg":
+		containerId, err := d.k8s.GetContainerId(app.AppName, resName)
+		if err != nil {
+			return err
+		}
+		dstFileName, sqlSrcFile := "pg.sql", filepath.Join("mnt", "tmp", "pg.sql")
+		if err := d.docker.CopyToContainer(dstFileName, containerId, data); err != nil {
+			return err
+		}
+
+		cmds := make([]string, 0)
+		cmds = append(cmds, "cat", sqlSrcFile, "|", "-- psql", "-U")
+		databaseName := ""
+		for _, e := range envs {
+			if e.EnvKey == "POSTGRES_USER" {
+				cmds = append(cmds, e.EnvValue)
+			}
+			if e.EnvKey == "POSTGRES_DB" {
+				databaseName = e.EnvValue
+			}
+		}
+
+		cmds = append(cmds, "-d", databaseName)
+		r, err := d.k8s.Exec(app.AppName, "pg", cmds)
+		if err != nil {
+			return err
+		}
+		s, err := ioutil.ReadAll(r)
+		log.Println(string(s), err)
+		return nil
+	default:
+		return errors.New("not yet implemented")
+	}
 }
 
 func (d *defaultResourcesDeploymentRepo) GetResourceEnvs(appId, resId uint) ([]types.ResourceEnv, error) {
@@ -237,11 +282,14 @@ func reverse(s string) string {
 	return string(runes)
 }
 
-func NewResourcesDeploymentRepository(db *gorm.DB, appRepo AppsRepository, accountRepo AccountRepository, k8s services.ResourcesService) ResourcesDeployment {
+func NewResourcesDeploymentRepository(db *gorm.DB, appRepo AppsRepository,
+	accountRepo AccountRepository, k8s services.ResourcesService,
+	docker services.DockerService) ResourcesDeployment {
 	return &defaultResourcesDeploymentRepo{
 		db:          db,
 		appRepo:     appRepo,
 		accountRepo: accountRepo,
 		k8s:         k8s,
+		docker: docker,
 	}
 }

@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"crypto/sha256"
 	"errors"
 	"fmt"
 	"github.com/jinzhu/gorm"
@@ -9,7 +8,6 @@ import (
 	proxy "github.com/saas/hostgolang/pkg/proxyclient"
 	"github.com/saas/hostgolang/pkg/services"
 	"github.com/saas/hostgolang/pkg/types"
-	"io"
 	"log"
 )
 
@@ -104,19 +102,11 @@ func (d *defaultDeploymentRepository) GetApplicationLogs(appName string) (string
 
 func (d *defaultDeploymentRepository) GetRelease(appId uint) (*types.Release, error) {
 	r := &types.Release{}
-	err := d.db.Table("releases").Where("app_id = ?", appId).First(r).Error
+	err := d.db.Table("releases").Where("app_id = ?", appId).Last(r).Error
 	if err != nil {
 		return r, ErrReleaseNotFound
 	}
 	return r, nil
-}
-
-func (d *defaultDeploymentRepository) calculateCheckSum(reader io.Reader) string {
-	hasher := sha256.New()
-	if _, err := io.Copy(hasher, reader); err != nil {
-		return ""
-	}
-	return fmt.Sprintf("%x", hasher.Sum(nil))
 }
 
 func (d *defaultDeploymentRepository) updateRelease(r *types.Release) error {
@@ -132,6 +122,10 @@ func (d *defaultDeploymentRepository) CreateRelease(app *types.App, ref string) 
 		rls := types.NewRelease(app.ID, ref, 1)
 		return d.db.Create(rls).Error
 	}
+	// use last stable release if wasn't a deploy
+	if ref == "" {
+		ref = release.DockerUrl
+	}
 	envs, _ := d.appRepo.GetEnvironmentVars(app.AppName)
 	if envs == nil {
 		envs = make([]types.Environment, 0)
@@ -143,13 +137,13 @@ func (d *defaultDeploymentRepository) CreateRelease(app *types.App, ref string) 
 	if err := d.storage.PutReleaseConfig(key, rlsConfig); err != nil {
 		return err
 	}
-	rls := types.NewRelease(app.ID, ref, release.VersionNumber + 1)
+	rls := types.NewRelease(app.ID, ref, newReleaseNumber)
 	return d.db.Create(rls).Error
 }
 
 func (d *defaultDeploymentRepository) GetReleaseByVersion(appId uint, version string) (*types.Release, error) {
 	r := &types.Release{}
-	err := d.db.Table("releases").Where("app_id = ? AND version = ?", appId, version).First(r).Error
+	err := d.db.Table("releases").Where("app_id = ? AND version_number = ?", appId, version).First(r).Error
 	if err != nil {
 		return r, ErrReleaseNotFound
 	}
@@ -203,6 +197,7 @@ func (d *defaultDeploymentRepository) RollbackDeployment(appId uint, version str
 	if err != nil {
 		return nil, err
 	}
+
 	key := fmt.Sprintf("%s:%s", app.AppName, version)
 	cfg, err := d.storage.GetReleaseConfig(key)
 	if err != nil {
@@ -230,7 +225,9 @@ func (d *defaultDeploymentRepository) RollbackDeployment(appId uint, version str
 		Memory:   settings.Plan.Info.Memory,
 		Cpu:      settings.Plan.Info.Cpu,
 	}
-
+	if err := d.appRepo.UpdateEnvironmentVars(appName, m); err != nil {
+		return nil, err
+	}
 	result, err := d.k8s.DeployService(opt)
 	if err != nil {
 		log.Println("failed to deploy service: ", err)

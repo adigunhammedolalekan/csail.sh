@@ -12,11 +12,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/saas/hostgolang/pkg/config"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 const baseBuildDir = "/tmp/mnt/hostgo/apps"
@@ -30,9 +28,7 @@ ENTRYPOINT [ "/app/%s" ]`
 
 //go:generate mockgen -destination=../mocks/docker_service_mock.go -package=mocks github.com/saas/hostgolang/pkg/services DockerService
 type DockerService interface {
-	BuildImage(ctx context.Context, buildDir, name string, r io.Reader) (string, error)
-	BuildImageFromGitRepository(ctx context.Context, dir, name string) (string, error)
-	PushImage(ctx context.Context, tag string) error
+	CopyToContainer(destFileName, containerId string, content io.Reader) error
 }
 
 type defaultDockerService struct {
@@ -44,81 +40,33 @@ func NewDockerService(cli *client.Client, cfg *config.Config) DockerService {
 	return &defaultDockerService{client: cli, cfg: cfg}
 }
 
-func (d *defaultDockerService) BuildImage(ctx context.Context, buildDir, name string, r io.Reader) (string, error) {
-	buildCtx, err := d.writeBuild(buildDir, name, r)
-	if err != nil {
-		return "", err
-	}
-	tag := d.md5()[:6]
-	pushUrl := fmt.Sprintf("%s/%s:%s", d.cfg.Registry.Url, strings.ToLower(name), tag)
-	rr, err := d.client.ImageBuild(ctx, buildCtx, types.ImageBuildOptions{
-		NoCache:    false,
-		Remove:     false,
-		Dockerfile: "Dockerfile",
-		Tags:       []string{pushUrl},
-	})
-	if err != nil {
-		return "", err
-	}
-	rsp, _ := ioutil.ReadAll(rr.Body)
-	fmt.Println(rr.OSType, string(rsp))
-	return pushUrl, nil
-}
-
-func (d *defaultDockerService) BuildImageFromGitRepository(ctx context.Context, dir, name string) (string, error) {
-	buildCtx, err := d.createBuildContext(dir)
-	if err != nil {
-		return "", err
-	}
-	tag := d.md5()[:6]
-	pushUrl := fmt.Sprintf("%s/%s:%s", d.cfg.Registry.Url, strings.ToLower(name), tag)
-	rr, err := d.client.ImageBuild(ctx, buildCtx, types.ImageBuildOptions{
-		NoCache:    false,
-		Remove:     false,
-		Dockerfile: "Dockerfile",
-		Tags:       []string{pushUrl},
-	})
-	if err != nil {
-		return "", err
-	}
-	rsp, _ := ioutil.ReadAll(rr.Body)
-	fmt.Println(rr.OSType, string(rsp))
-	return pushUrl, nil
-}
-
-func (d *defaultDockerService) PushImage(ctx context.Context, tag string) error {
-	r, err := d.client.ImagePush(ctx, tag, types.ImagePushOptions{RegistryAuth: d.registryAuthAsBase64()})
+func (d *defaultDockerService) CopyToContainer(destFileName, containerId string, content io.Reader) error {
+	wd, err := os.Getwd()
 	if err != nil {
 		return err
 	}
-	rsp, _ := ioutil.ReadAll(r)
-	log.Println(string(rsp))
-	return nil
-}
 
-func (d *defaultDockerService) writeBuild(buildDir, name string, r io.Reader) (io.Reader, error) {
-	dir := filepath.Join(baseBuildDir, buildDir)
-	if err := os.MkdirAll(dir, os.ModeDir); err != nil {
-		return nil, err
-	}
-	filename := filepath.Join(dir, name)
-	out, err := os.Create(filename)
+	f := filepath.Join(wd, destFileName)
+	fi, err := os.Create(f)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	// write binary
-	_, err = io.Copy(out, r)
+	if _, err := io.Copy(fi, content); err != nil {
+		return err
+	}
+	tarredContent, err := d.createBuildContext(f)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	// write Dockerfile
-	dockerfilePath := filepath.Join(dir, "Dockerfile")
-	dockerfileContent := fmt.Sprintf(rawDockerfile, name, name)
-	if err := ioutil.WriteFile(dockerfilePath, []byte(dockerfileContent), os.ModePerm); err != nil {
-		return nil, err
+	dstDir := filepath.Join("mnt", "tmp")
+	err = d.client.CopyToContainer(context.Background(),
+		containerId, dstDir, tarredContent, types.CopyToContainerOptions{AllowOverwriteDirWithFile: true})
+	if err != nil {
+		log.Println("cannot copy to container ", err)
+		return err
 	}
-	log.Println("creating build ctx from ", dir)
-	return d.createBuildContext(dir)
+	// clean up
+	return os.Remove(f)
 }
 
 func (d *defaultDockerService) createBuildContext(filename string) (io.Reader, error) {

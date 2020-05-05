@@ -23,6 +23,7 @@ type ResourcesService interface {
 		res res.Res, local bool) (*types.ResourceDeploymentResult, error)
 	DeleteResource(app *types.App, name string) error
 	Exec(appName, resName string, cmds []string) (io.Reader, error)
+	GetContainerId(appName, resName string) (string, error)
 }
 
 type defaultResourcesService struct {
@@ -179,6 +180,11 @@ func (d *defaultResourcesService) Exec(appName, resName string, cmds []string) (
 		return nil, err
 	}
 	return bytes.NewBufferString(r), nil
+}
+
+
+func (d *defaultResourcesService) GetContainerId(appName, resName string) (string, error) {
+	return d.k8s.GetContainerId(appName, resName)
 }
 
 func (d *defaultResourcesService) createResourceStatefulSet(appName string, svc *v1.Service, res res.Res) (*appsv1.StatefulSet, error) {

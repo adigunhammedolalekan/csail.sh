@@ -171,3 +171,49 @@ func TestApiHandler_CreateAppHandlerAuthError(t *testing.T) {
 		t.Fatalf("expected httpCode %d; got %d instead", want, got)
 	}
 }
+
+func TestApiHandler_GetAccountApps(t *testing.T) {
+	controller := gomock.NewController(t)
+	defer controller.Finish()
+
+	testUser := "testUser"
+	appRepo := mocks.NewMockAppsRepository(controller)
+	sessionStore := mocks.NewMockStore(controller)
+
+	sessionStore.EXPECT().Get(testUser).Return(mockAccount, nil)
+	appRepo.EXPECT().GetAccountApps(mockAccount.ID).Return([]types.App{*mockApp}, nil)
+
+	handler := NewApiHandler(appRepo, nil, sessionStore)
+	w := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(w)
+	req := httptest.NewRequest("GET", "/me/apps", nil)
+	req.Header.Set(tokenHeaderName, testUser)
+	ctx.Request = req
+
+	handler.GetAccountApps(ctx)
+	if want, got := http.StatusOK, w.Code; got != want {
+		t.Fatalf("expected httpCode %d; got %d instead", want, got)
+	}
+}
+
+func TestApiHandler_GetAccountApps_Forbidden(t *testing.T) {
+	controller := gomock.NewController(t)
+	defer controller.Finish()
+
+	testUser := "testUser"
+	appRepo := mocks.NewMockAppsRepository(controller)
+	sessionStore := mocks.NewMockStore(controller)
+
+	sessionStore.EXPECT().Get(testUser).Return(nil, errors.New("account not found"))
+	handler := NewApiHandler(appRepo, nil, sessionStore)
+	w := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(w)
+	req := httptest.NewRequest("GET", "/me/apps", nil)
+	req.Header.Set(tokenHeaderName, testUser)
+	ctx.Request = req
+
+	handler.GetAccountApps(ctx)
+	if want, got := http.StatusForbidden, w.Code; got != want {
+		t.Fatalf("expected httpCode %d; got %d instead", want, got)
+	}
+}

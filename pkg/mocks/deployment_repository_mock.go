@@ -7,7 +7,6 @@ package mocks
 import (
 	gomock "github.com/golang/mock/gomock"
 	types "github.com/saas/hostgolang/pkg/types"
-	io "io"
 	reflect "reflect"
 )
 
@@ -34,23 +33,8 @@ func (m *MockDeploymentRepository) EXPECT() *MockDeploymentRepositoryMockRecorde
 	return m.recorder
 }
 
-// CheckRelease mocks base method
-func (m *MockDeploymentRepository) CheckRelease(arg0 uint, arg1 io.Reader) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CheckRelease", arg0, arg1)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CheckRelease indicates an expected call of CheckRelease
-func (mr *MockDeploymentRepositoryMockRecorder) CheckRelease(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckRelease", reflect.TypeOf((*MockDeploymentRepository)(nil).CheckRelease), arg0, arg1)
-}
-
 // CreateDeployment mocks base method
-func (m *MockDeploymentRepository) CreateDeployment(arg0 *types.App, arg1 io.Reader) (*types.DeploymentResult, error) {
+func (m *MockDeploymentRepository) CreateDeployment(arg0 *types.App, arg1 string) (*types.DeploymentResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateDeployment", arg0, arg1)
 	ret0, _ := ret[0].(*types.DeploymentResult)
@@ -62,21 +46,6 @@ func (m *MockDeploymentRepository) CreateDeployment(arg0 *types.App, arg1 io.Rea
 func (mr *MockDeploymentRepositoryMockRecorder) CreateDeployment(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDeployment", reflect.TypeOf((*MockDeploymentRepository)(nil).CreateDeployment), arg0, arg1)
-}
-
-// CreateDeployment mocks base method
-func (m *MockDeploymentRepository) CreateDockerDeployment(arg0 *types.App, arg1 string) (*types.DeploymentResult, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateDeployment", arg0, arg1)
-	ret0, _ := ret[0].(*types.DeploymentResult)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateDeployment indicates an expected call of CreateDeployment
-func (mr *MockDeploymentRepositoryMockRecorder) CreateDockerDeployment(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDeployment", reflect.TypeOf((*MockDeploymentRepository)(nil).CreateDockerDeployment), arg0, arg1)
 }
 
 // CreateOrUpdateDeploymentSettings mocks base method
@@ -94,17 +63,17 @@ func (mr *MockDeploymentRepositoryMockRecorder) CreateOrUpdateDeploymentSettings
 }
 
 // CreateRelease mocks base method
-func (m *MockDeploymentRepository) CreateRelease(arg0 uint, arg1 string, arg2 []byte) error {
+func (m *MockDeploymentRepository) CreateRelease(arg0 *types.App, arg1 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateRelease", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "CreateRelease", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreateRelease indicates an expected call of CreateRelease
-func (mr *MockDeploymentRepositoryMockRecorder) CreateRelease(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockDeploymentRepositoryMockRecorder) CreateRelease(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRelease", reflect.TypeOf((*MockDeploymentRepository)(nil).CreateRelease), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRelease", reflect.TypeOf((*MockDeploymentRepository)(nil).CreateRelease), arg0, arg1)
 }
 
 // GetApplicationLogs mocks base method
@@ -150,6 +119,21 @@ func (m *MockDeploymentRepository) GetRelease(arg0 uint) (*types.Release, error)
 func (mr *MockDeploymentRepositoryMockRecorder) GetRelease(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRelease", reflect.TypeOf((*MockDeploymentRepository)(nil).GetRelease), arg0)
+}
+
+// GetReleaseByVersion mocks base method
+func (m *MockDeploymentRepository) GetReleaseByVersion(arg0 uint, arg1 string) (*types.Release, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetReleaseByVersion", arg0, arg1)
+	ret0, _ := ret[0].(*types.Release)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetReleaseByVersion indicates an expected call of GetReleaseByVersion
+func (mr *MockDeploymentRepositoryMockRecorder) GetReleaseByVersion(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetReleaseByVersion", reflect.TypeOf((*MockDeploymentRepository)(nil).GetReleaseByVersion), arg0, arg1)
 }
 
 // GetReleases mocks base method

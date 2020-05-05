@@ -12,7 +12,6 @@ type App struct {
 	AccessUrl           string `json:"access_url"`
 	RegistryDownloadUrl string `json:"registry_download_url"`
 	LocalAccessUrl      string `json:"local_access_url"`
-	GitUrl              string `json:"git_url"`
 
 	Environments []Environment `json:"environments"`
 	Account      *Account      `json:"account" gorm:"-" sql:"-"`
@@ -75,7 +74,6 @@ func NewRelease(appId uint, ref string, v int64) *Release {
 	}
 }
 
-
 func NewEnvVariable(appId, resId uint, k, v string) *Environment {
 	return &Environment{
 		AppId:    appId,
@@ -90,7 +88,6 @@ func NewApp(name string, accountId uint) *App {
 		AccountId: accountId,
 		AppName:   name,
 		AccessUrl: fmt.Sprintf("https://%s.hostgoapp.com", name),
-		GitUrl:    fmt.Sprintf("https://git.hostgoapp.com/%s.git", name),
 	}
 }
 

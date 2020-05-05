@@ -47,6 +47,7 @@ type K8sService interface {
 	AddDomain(appName, domain string) error
 	RemoveDomain(appName, domain string) error
 	PodExec(appName, resName string, cmds []string) (string, error)
+	GetContainerId(appName, resName string) (string, error)
 }
 
 type defaultK8sService struct {
@@ -585,6 +586,7 @@ func (d *defaultK8sService) PodExec(appName, resName string, cmds []string) (str
 		req.Param("command", cmd)
 	}
 
+	log.Println(req.URL().String())
 	executor, err := remotecommand.NewSPDYExecutor(d.restConfig, http.MethodPost, req.URL())
 	if err != nil {
 		return "", err
@@ -603,4 +605,22 @@ func (d *defaultK8sService) PodExec(appName, resName string, cmds []string) (str
 		return "", err
 	}
 	return out.String(), nil
+}
+
+func (d *defaultK8sService) GetContainerId(appName, resName string) (string, error) {
+	selector := fmt.Sprintf("res=svc-%s-%s", resName, appName)
+	pods, err := d.getPodsBySelector(selector)
+	if err != nil {
+		return "", err
+	}
+	if len(pods) <= 0 {
+		return "", errors.New("no pod found")
+	}
+	pod := pods[0]
+	containers := pod.Spec.Containers
+	containerId := ""
+	if len(containers) > 0 {
+		containerId = containers[0].Name
+	}
+	return containerId, nil
 }
