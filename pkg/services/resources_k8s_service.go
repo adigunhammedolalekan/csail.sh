@@ -14,7 +14,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/retry"
 	"strings"
-	"time"
 )
 
 //go:generate mockgen -destination=../mocks/resources_k8s_service_mock.go -package=mocks github.com/saas/hostgolang/pkg/services ResourcesService
@@ -67,15 +66,6 @@ func (d *defaultResourcesService) DeployResource(app *types.App,
 		return nil, err
 	}
 	lbAddress := fmt.Sprintf("%s.%s:%d", svc.Name, stormNs, res.Port())
-	count := 0
-	for {
-		if count == 5 {
-			break
-		}
-
-		count += 1
-		time.Sleep(2 * time.Second)
-	}
 	// update deployment's environment variable to contain
 	// the newly added resources config
 	hostEnvKey := fmt.Sprintf("%s_HOST", strings.ToUpper(res.Name()))
