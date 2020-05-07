@@ -56,7 +56,7 @@ services:
 
   # APPLICATION
   app:
-    build: ./
+    build: ..
     container_name: hostgolang-web
     volumes:
       - "${HOME}/.kube/config:/var/kube/config"
