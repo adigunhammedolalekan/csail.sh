@@ -66,31 +66,13 @@ func (d *defaultResourcesService) DeployResource(app *types.App,
 	if err != nil {
 		return nil, err
 	}
-	lbAddress := ""
-	if lbAddr := svc.Spec.LoadBalancerIP; lbAddr == "" {
-		for _, addr := range svc.Spec.ExternalIPs {
-			if addr != "" {
-				lbAddress = addr
-				break
-			}
-		}
-	}
-	if local {
-		lbAddress = fmt.Sprintf("%s.%s:%d", svc.Name, stormNs, res.Port())
-	}
-	stName := fmt.Sprintf("st-%s-%s", res.Name(), app.AppName)
+	lbAddress := fmt.Sprintf("%s.%s:%d", svc.Name, stormNs, res.Port())
 	count := 0
 	for {
 		if count == 5 {
 			break
 		}
-		sts, err := d.getStatefulset(stName)
-		if err != nil {
-			continue
-		}
-		if status := sts.Status; status.ReadyReplicas > 0 && (status.ReadyReplicas == status.Replicas) {
-			break
-		}
+
 		count += 1
 		time.Sleep(2 * time.Second)
 	}

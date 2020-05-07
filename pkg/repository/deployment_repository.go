@@ -216,6 +216,9 @@ func (d *defaultDeploymentRepository) RollbackDeployment(appId uint, version str
 			m[e.EnvKey] = e.EnvValue
 		}
 	}
+	if err := d.MirrorEnvironment(appId, cfg.Envs); err != nil {
+		return nil, err
+	}
 	opt := &types.CreateDeploymentOpts{
 		Envs:     m,
 		Name:     appName,
@@ -240,6 +243,28 @@ func (d *defaultDeploymentRepository) RollbackDeployment(appId uint, version str
 	result.Version = version
 	result.Address = fmt.Sprintf("https://%s.%s", app.AppName, d.cfg.ServerUrl)
 	return result, nil
+}
+
+func (d *defaultDeploymentRepository) MirrorEnvironment(appId uint, newValues []types.Environment) error {
+	tx := d.db.Begin()
+	if err := tx.Error; err != nil {
+		return err
+	}
+	err := tx.Table("environments").Where("app_id = ?", appId).Delete(&types.Environment{}).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	for _, e := range newValues {
+		if err := tx.Create(&e).Error; err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+	return nil
 }
 
 func (d *defaultDeploymentRepository) HasRegistryAuthorization(req *types.AuthorizationRequest) ([]string, error) {
