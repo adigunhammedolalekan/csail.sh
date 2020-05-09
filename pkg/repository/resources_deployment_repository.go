@@ -16,6 +16,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -183,7 +184,7 @@ func (d *defaultResourcesDeploymentRepo) DumpDatabase(app *types.App, resName st
 				cmds = append(cmds, e.EnvValue)
 			}
 		}
-		return d.k8s.Exec(app.AppName, "pg", cmds)
+		return d.k8s.Exec(app.AppName, "pg", cmds, nil)
 	case "mysql":
 		cmds := make([]string, 0)
 		cmds = append(cmds, "mysqldump", "-u")
@@ -200,7 +201,7 @@ func (d *defaultResourcesDeploymentRepo) DumpDatabase(app *types.App, resName st
 			}
 		}
 		cmds = append(cmds, databaseName)
-		return d.k8s.Exec(app.AppName, "mysql", cmds)
+		return d.k8s.Exec(app.AppName, "mysql", cmds, nil)
 	default:
 		return nil, errors.New("not yet implemented")
 	}
@@ -215,20 +216,15 @@ func (d *defaultResourcesDeploymentRepo) RestoreDatabase(app *types.App, resName
 	if err != nil {
 		return err
 	}
-
 	switch resName {
 	case "pg":
-		containerId, err := d.k8s.GetContainerId(app.AppName, resName)
+		filename, err := prepare("pg", data)
 		if err != nil {
 			return err
 		}
-		dstFileName, sqlSrcFile := "pg.sql", filepath.Join("mnt", "tmp", "pg.sql")
-		if err := d.docker.CopyToContainer(dstFileName, containerId, data); err != nil {
-			return err
-		}
-
+		log.Println(filename)
 		cmds := make([]string, 0)
-		cmds = append(cmds, "cat", sqlSrcFile, "|", "-- psql", "-U")
+		cmds = append(cmds,"-- psql", "-U")
 		databaseName := ""
 		for _, e := range envs {
 			if e.EnvKey == "POSTGRES_USER" {
@@ -238,9 +234,8 @@ func (d *defaultResourcesDeploymentRepo) RestoreDatabase(app *types.App, resName
 				databaseName = e.EnvValue
 			}
 		}
-
-		cmds = append(cmds, "-d", databaseName)
-		r, err := d.k8s.Exec(app.AppName, "pg", cmds)
+		cmds = append(cmds, "-d", databaseName, "<", "db-pg-tmp")
+		r, err := d.k8s.Exec(app.AppName, "pg", cmds, data)
 		if err != nil {
 			return err
 		}
@@ -250,6 +245,23 @@ func (d *defaultResourcesDeploymentRepo) RestoreDatabase(app *types.App, resName
 	default:
 		return errors.New("not yet implemented")
 	}
+}
+
+func prepare(resName string, data io.Reader) (string, error) {
+	wd, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	log.Println("current working dir ", wd)
+	filename := filepath.Join(wd, fmt.Sprintf("db-%s-tmp", resName))
+	fi, err := os.Create(filename)
+	if err != nil {
+		return "", err
+	}
+	if _, err := io.Copy(fi, data); err != nil {
+		return "", err
+	}
+	return filename, nil
 }
 
 func (d *defaultResourcesDeploymentRepo) GetResourceEnvs(appId, resId uint) ([]types.ResourceEnv, error) {

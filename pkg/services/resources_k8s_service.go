@@ -21,7 +21,7 @@ type ResourcesService interface {
 	DeployResource(app *types.App, envs []types.ResourceEnv, appEnvs []types.Environment,
 		res res.Res, local bool) (*types.ResourceDeploymentResult, error)
 	DeleteResource(app *types.App, name string) error
-	Exec(appName, resName string, cmds []string) (io.Reader, error)
+	Exec(appName, resName string, cmds []string, stdIn io.Reader) (io.Reader, error)
 	GetContainerId(appName, resName string) (string, error)
 }
 
@@ -146,8 +146,8 @@ func (d *defaultResourcesService) DeleteResource(app *types.App, name string) er
 	return nil
 }
 
-func (d *defaultResourcesService) Exec(appName, resName string, cmds []string) (io.Reader, error) {
-	r, err := d.k8s.PodExec(appName, resName, cmds)
+func (d *defaultResourcesService) Exec(appName, resName string, cmds []string, stdIn io.Reader) (io.Reader, error) {
+	r, err := d.k8s.PodExec(appName, resName, cmds, stdIn)
 	if err != nil {
 		return nil, err
 	}

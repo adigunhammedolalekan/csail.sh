@@ -65,16 +65,31 @@ func (mr *MockResourcesServiceMockRecorder) DeployResource(arg0, arg1, arg2, arg
 }
 
 // Exec mocks base method
-func (m *MockResourcesService) Exec(arg0, arg1 string, arg2 []string) (io.Reader, error) {
+func (m *MockResourcesService) Exec(arg0, arg1 string, arg2 []string, arg3 io.Reader) (io.Reader, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Exec", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "Exec", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(io.Reader)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Exec indicates an expected call of Exec
-func (mr *MockResourcesServiceMockRecorder) Exec(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockResourcesServiceMockRecorder) Exec(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Exec", reflect.TypeOf((*MockResourcesService)(nil).Exec), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Exec", reflect.TypeOf((*MockResourcesService)(nil).Exec), arg0, arg1, arg2, arg3)
+}
+
+// GetContainerId mocks base method
+func (m *MockResourcesService) GetContainerId(arg0, arg1 string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetContainerId", arg0, arg1)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetContainerId indicates an expected call of GetContainerId
+func (mr *MockResourcesServiceMockRecorder) GetContainerId(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContainerId", reflect.TypeOf((*MockResourcesService)(nil).GetContainerId), arg0, arg1)
 }

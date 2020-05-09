@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/saas/hostgolang/pkg/types"
+	"io"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -46,7 +47,7 @@ type K8sService interface {
 	ListRunningPods(appName string) ([]types.Instance, error)
 	AddDomain(appName, domain string) error
 	RemoveDomain(appName, domain string) error
-	PodExec(appName, resName string, cmds []string) (string, error)
+	PodExec(appName, resName string, cmds []string, stdIn io.Reader) (string, error)
 	GetContainerId(appName, resName string) (string, error)
 }
 
@@ -517,18 +518,6 @@ func (d *defaultK8sService) dockerConfigJson() ([]byte, error) {
 	return json.Marshal(a)
 }
 
-func findAvailablePort() int {
-	port := rand.Intn(59999)
-	addr := fmt.Sprintf("localhost:%d", port)
-	conn, err := net.DialTimeout("tcp", addr, 5*time.Second)
-	if err != nil {
-		return port
-	}
-	if err := conn.Close(); err != nil { /*no-op*/
-	}
-	return findAvailablePort()
-}
-
 func findPort() int {
 	port := rand.Intn(validPortRange)
 	if port < 1025 {
@@ -554,7 +543,7 @@ func truncString(s string) string {
 	return strings.TrimSpace(s[0:14])
 }
 
-func (d *defaultK8sService) PodExec(appName, resName string, cmds []string) (string, error) {
+func (d *defaultK8sService) PodExec(appName, resName string, cmds []string, stdIn io.Reader) (string, error) {
 	log.Printf("Execing command for App=%s, Res=%s, Cmds=%s", appName, resName, cmds)
 	selector := fmt.Sprintf("res=svc-%s-%s", resName, appName)
 	pods, err := d.getPodsBySelector(selector)
@@ -571,6 +560,8 @@ func (d *defaultK8sService) PodExec(appName, resName string, cmds []string) (str
 		container = containers[0].Name
 	}
 	log.Printf("Pod=%s <==> Container=%s", pod.Name, container)
+	wd, _ := os.Getwd()
+	log.Println("current wd ", wd)
 	c := d.client.CoreV1().RESTClient()
 
 	req := c.Post().
@@ -586,16 +577,13 @@ func (d *defaultK8sService) PodExec(appName, resName string, cmds []string) (str
 		req.Param("command", cmd)
 	}
 
-	log.Println(req.URL().String())
 	executor, err := remotecommand.NewSPDYExecutor(d.restConfig, http.MethodPost, req.URL())
 	if err != nil {
 		return "", err
 	}
 	out := &bytes.Buffer{}
-	os.Stdout.Sync()
-	os.Stderr.Sync()
 	err = executor.Stream(remotecommand.StreamOptions{
-		Stdin:              nil,
+		Stdin:              stdIn,
 		Stdout:             out,
 		Stderr:             os.Stderr,
 		Tty:                false,

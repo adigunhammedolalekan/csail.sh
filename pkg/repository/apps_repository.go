@@ -7,6 +7,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/saas/hostgolang/pkg/services"
 	"github.com/saas/hostgolang/pkg/types"
+	"io"
 )
 
 var ErrDuplicateName = errors.New("an app already exists with that name")
@@ -34,7 +35,7 @@ type AppsRepository interface {
 	GetDomainByAppId(appId uint) (*types.Domain, error)
 	CreateDomain(appId uint, address string) (*types.Domain, error)
 	RemoveDomain(appId uint, address string) error
-	PodExec(appName, resName string, cmds []string) (string, error)
+	PodExec(appName, resName string, cmds []string, stdIn io.Reader) (string, error)
 }
 
 type appsRepository struct {
@@ -258,8 +259,8 @@ func (a *appsRepository) RemoveDomain(appId uint, address string) error {
 	return nil
 }
 
-func (a *appsRepository) PodExec(appName, resName string, cmds []string) (string, error) {
-	return a.ks8.PodExec(appName, resName, cmds)
+func (a *appsRepository) PodExec(appName, resName string, cmds []string, stdIn io.Reader) (string, error) {
+	return a.ks8.PodExec(appName, resName, cmds, stdIn)
 }
 
 func NewAppsRepository(db *gorm.DB, nameGenerator namegenerator.Generator,

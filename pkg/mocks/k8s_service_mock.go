@@ -7,6 +7,7 @@ package mocks
 import (
 	gomock "github.com/golang/mock/gomock"
 	types "github.com/saas/hostgolang/pkg/types"
+	io "io"
 	reflect "reflect"
 )
 
@@ -62,6 +63,21 @@ func (mr *MockK8sServiceMockRecorder) DeployService(arg0 interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeployService", reflect.TypeOf((*MockK8sService)(nil).DeployService), arg0)
 }
 
+// GetContainerId mocks base method
+func (m *MockK8sService) GetContainerId(arg0, arg1 string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetContainerId", arg0, arg1)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetContainerId indicates an expected call of GetContainerId
+func (mr *MockK8sServiceMockRecorder) GetContainerId(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContainerId", reflect.TypeOf((*MockK8sService)(nil).GetContainerId), arg0, arg1)
+}
+
 // GetLogs mocks base method
 func (m *MockK8sService) GetLogs(arg0 string) (string, error) {
 	m.ctrl.T.Helper()
@@ -93,18 +109,18 @@ func (mr *MockK8sServiceMockRecorder) ListRunningPods(arg0 interface{}) *gomock.
 }
 
 // PodExec mocks base method
-func (m *MockK8sService) PodExec(arg0, arg1 string, arg2 []string) (string, error) {
+func (m *MockK8sService) PodExec(arg0, arg1 string, arg2 []string, arg3 io.Reader) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PodExec", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "PodExec", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // PodExec indicates an expected call of PodExec
-func (mr *MockK8sServiceMockRecorder) PodExec(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockK8sServiceMockRecorder) PodExec(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PodExec", reflect.TypeOf((*MockK8sService)(nil).PodExec), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PodExec", reflect.TypeOf((*MockK8sService)(nil).PodExec), arg0, arg1, arg2, arg3)
 }
 
 // RemoveDomain mocks base method

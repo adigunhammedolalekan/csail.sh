@@ -7,6 +7,7 @@ package mocks
 import (
 	gomock "github.com/golang/mock/gomock"
 	types "github.com/saas/hostgolang/pkg/types"
+	io "io"
 	reflect "reflect"
 )
 
@@ -198,18 +199,18 @@ func (mr *MockAppsRepositoryMockRecorder) ListRunningInstances(arg0 interface{})
 }
 
 // PodExec mocks base method
-func (m *MockAppsRepository) PodExec(arg0, arg1 string, arg2 []string) (string, error) {
+func (m *MockAppsRepository) PodExec(arg0, arg1 string, arg2 []string, arg3 io.Reader) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PodExec", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "PodExec", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // PodExec indicates an expected call of PodExec
-func (mr *MockAppsRepositoryMockRecorder) PodExec(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockAppsRepositoryMockRecorder) PodExec(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PodExec", reflect.TypeOf((*MockAppsRepository)(nil).PodExec), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PodExec", reflect.TypeOf((*MockAppsRepository)(nil).PodExec), arg0, arg1, arg2, arg3)
 }
 
 // RemoveDomain mocks base method
